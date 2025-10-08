@@ -1,0 +1,232 @@
+<div align="center">
+  <h1>
+    Release Manager
+  </h1>
+  <p><strong>Transforming software delivery process with intelligent agent orchestration</strong></p>
+  <br>
+  <p><a href="https://placeholder-for-rma-demo-video.com">▶️ Watch Demo Video</a></p>
+</div>
+
+## 🚀 Overview
+
+In modern software development, **Release Managers** play a pivotal role bridging the gap between development and operations. As the orchestrators of software deployment, they ensure that releases are timely, efficient, and risk-mitigated. However, increasing complexity and fragmentation across systems have made this role more challenging than ever.
+
+The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
+
+**Latest Updates:**
+- **Enhanced MCP Integration**: Full Azure DevOps integration via Model Context Protocol with advanced authentication options
+- **Intelligent Agent Orchestration**: Multi-agent planning system with smart fallback mechanisms
+- **Advanced Visualization**: Code interpreter-powered charts and graphs for release insights
+- **Comprehensive Evaluation Framework**: Built-in evaluation metrics and agent-specific testing capabilities
+- **Flexible Authentication**: Support for both Azure CLI and Personal Access Token authentication
+- **Robust Error Handling**: Graceful degradation with fallback agents when services are unavailable
+
+---
+
+## 🧩 Key Challenges
+
+- ❌ Fragmented release data across platforms
+- ❌ Lack of real-time release health visibility
+- ❌ High manual effort in compiling readiness reports
+- ❌ Difficulty managing cross-team/service dependencies
+- ❌ Visualizing complex data across multiple systems
+- ❌ Notifying stakeholders on change in the system
+
+---
+
+## ✅ What the RMA Solves
+
+### 🔄 Release Planning & Coordination
+
+- **Intelligent Agent Orchestration**: Multi-agent system with smart planning that routes queries to appropriate agents (JIRA, DevOps, Visualization, Fallback)
+- **Real-time dependency mapping and release health assessment**: Seamless integration between JIRA issues and Azure DevOps work items
+- **Advanced Visualization**: Interactive charts, graphs, and visual analysis using code interpreter capabilities
+- **Cross-Release Tracking**: Query and visualize data across multiple releases with intelligent filtering
+
+### 🕓 Scheduling & Readiness Automation
+
+- **Smart notifications**: Integrated email notification system via Microsoft Graph APIs
+- **Issue and stakeholder updates**: Automated status updates via integrated channels (emails)
+- **Release Timeline Analysis**: Intelligent forecasting and delivery date estimation
+- **Confirmation-based Updates**: Safe update mechanisms with user confirmation before making changes
+
+### 🌐 Cross-System Collaboration
+
+- **Enhanced MCP Integration**: Comprehensive Azure DevOps integration via Model Context Protocol with:
+  - Work item management (create, read, update, search)
+  - Build and release tracking
+  - Repository and project information
+  - Team and iteration management
+  - Pull request tracking
+- **Flexible Authentication**: Support for both Azure CLI and Personal Access Token authentication
+- **JIRA Deep Integration**: Custom field support, JQL optimization, and secure credential handling
+- **Microsoft Graph APIs**: Enterprise identity integration and notification capabilities
+- **Unified, contextual insights**: Data synthesis from disparate systems with intelligent agent coordination
+
+---
+
+## 🧠 Solution Architecture
+
+The architecture is built on a modular and secure AI-native design leveraging:
+
+- **Multi-Agent Orchestration System**: Intelligent planning agent that coordinates between:
+  - **JIRA Agent**: Handles customer issues with JQL optimization and custom field support
+  - **Azure DevOps Agent**: Manages Azure DevOps work items via MCP with comprehensive tool discovery *(replaces deprecated database-backed DevOps Agent)*
+  - **Visualization Agent**: Creates interactive charts and graphs using code interpreter capabilities
+  - **Planner Agent**: Routes queries intelligently based on user intent and system capabilities  
+  - **Fallback Agent**: Provides graceful degradation when services are unavailable
+- **Azure AI Foundry Service**: Cloud-based agents with integrated tools (Code Interpreter, SharePoint)
+- **Semantic Kernel Framework**: Advanced agent orchestration, memory management, and plugin integration
+- **Model Context Protocol (MCP)**: Standardized Azure DevOps integration with auto-discovery of tools and capabilities
+- **Microsoft Graph API**: Enterprise identity integration and email notification system
+- **Azure Key Vault & Azure Storage**: Secure secret and data management with encrypted credential storage
+- **Comprehensive Evaluation Framework**: Built-in metrics for agent performance and end-to-end validation
+- **Redis Integration**: Session management and message queuing for scalable operations
+
+*For setting up email notifications, additional setup is required. For instructions, please refer to this guide: [Microsoft Email Notifications Setup](plugins/NOTIFICATIONS.md)*
+
+---
+
+## ARCHITECTURE DIAGRAM
+
+This diagram provides a visual representation of how the **JIRA Agent**, **Azure DevOps Agent**, **Visualization Agent** and **Notification Agent** collaborate to streamline release planning and execution for a release manager.
+
+> **Note**: The **Azure DevOps Agent** shown in the diagram represents the current MCP-based implementation that replaced the deprecated MySQL database-backed DevOps Agent.
+
+![RMA Solution Architecture](./docs/ReleaseManagerAssistant_Architecture.png)
+
+*Diagram above highlights components in the end-to-end system run that run locally (highlighted in green) and components that run in the cloud (highlighted in blue).*
+
+---
+
+## ⚠️ Deprecated Components
+
+**Important Notice**: As of the current release, the following components have been deprecated and are no longer used by the orchestrator:
+
+### Deprecated MySQL Database-Backed DevOps Agent
+
+- **File Location**: `agents/devops_agent.py` *(retained for archival purposes)*
+- **Associated Plugin**: `plugins/devops_plugin.py` *(retained for archival purposes)*
+- **Reason for Deprecation**: The original DevOps Agent relied on MySQL database connectivity and required maintaining a separate database infrastructure
+- **Replacement**: **Azure DevOps Agent** (`agents/azure_devops_agent.py`) - Uses Model Context Protocol (MCP) for direct Azure DevOps API integration
+- **Benefits of New Implementation**: 
+  - No database infrastructure required
+  - Direct Azure DevOps API integration via MCP
+  - Automatic tool discovery and comprehensive DevOps operations
+  - Better security with native Azure authentication
+  - Simplified deployment and maintenance
+
+> **Technical Note**: The deprecated files are retained in the codebase for technical reference and demonstration purposes only. They should not be used in any execution paths or new implementations.
+
+---
+
+## 🛠️ Getting Started
+
+> **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.
+
+For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIONS](SETUP.md)
+
+### Prerequisites
+
+- **Azure Subscription** with appropriate permissions
+- **Access to Azure OpenAI and Azure AI Foundry** services
+- **Local/Cloud instance for JIRA** with API access and custom field configuration
+- **Azure DevOps organization access** with work item, build, and release permissions
+- **Node.js 20+** (required for Azure DevOps MCP Server)
+- **Python >= 3.12** for agent runtime
+- **Docker runtime** for running service containers locally (For more information on local execution, refer to this guide: [LOCAL EXECUTION IN DOCKER](../../DOCKER.README.md))
+- **Visual Studio Code** with Python extension (recommended for development)
+
+### Quick Start Options
+
+1. **Docker Deployment** (Recommended): Use pre-configured VS Code tasks for containerized deployment
+2. **Local Development**: Full debugging capabilities with VS Code launch configurations  
+3. **Production Setup**: Azure-hosted deployment with proper secret management
+
+---
+
+## 🔗 Integrations Supported
+
+- **[JIRA SDK](https://jira.readthedocs.io/)** - Complete JIRA API integration with custom field support
+- **[JIRA API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)** - Direct REST API access with JQL optimization
+  > ⚠️ **Warning:** Jira Plugin uses HTTP BASIC authentication which is not recommended for Production workloads. Ensure token auth is configured.
+- **[Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)** - Comprehensive Model Context Protocol integration featuring:
+    - Work Items (create, read, update, search, batch operations)
+    - Builds and Releases (status tracking, artifact management)
+    - Repositories and Pull Requests (code change tracking)
+    - Teams and Iterations (project management)
+    - Search capabilities across all Azure DevOps entities
+  > ⚠️ **Warning:** Azure DevOps API access is subject to user permissions. Please make sure right permissions are configured to access all features/tools exposed as part of the MCP server.
+- **[Microsoft Graph API](https://learn.microsoft.com/en-us/graph/overview)** - Enterprise notifications and identity management
+- **[Azure AI Foundry](https://ai.azure.com/doc/azure/ai-foundry/agents/overview)** - Cloud-based agent services with code interpreter capabilities
+- **Redis** - Session management and message queuing for scalable operations
+
+---
+
+##  🔧 Troubleshooting Guide
+
+Below are solutions for common issues encountered when setting up or running the Release Manager Assistant:
+
+### 🔄 Environment and Setup Issues
+
+| Issue | Solution |
+|-------|----------|
+| **VS Code debugging not working** | Ensure the PYTHONPATH environment variable is set correctly in launch.json and the correct Python interpreter is selected. |
+
+### 🔌 Integration and Connection Issues
+
+| Issue | Solution |
+|-------|----------|
+| **"Failed to authenticate with Azure DevOps"** | Check your PAT token expiration and/or user credentials  and permissions. Ensure AZURE_DEVOPS_EXT_PAT environment variable is set correctly or Azure CLI is authenticated. |
+| **"JIRA API connection failed"** | Verify your JIRA server URL, username, and password in the .env file. Check network connectivity and firewall settings. |
+| **WebSocket connection errors** | Check that Session Manager is started before accessing the frontend. Verify Redis is running and accessible. |
+
+### 🖥️ Frontend Issues
+
+| Issue | Solution |
+|-------|----------|
+| **React/Vite build errors** | For Node.js version conflicts, try using Node.js version 16+ for better compatibility. Reinstall dependencies with `npm install` in the frontend directory. |
+| **"Failed to load resource" errors in browser** | Check browser console for specific error messages. *Ensure Session Manager is running before accessing the frontend.* |
+| **Blank or unresponsive UI** | Verify WebSocket connection to Session Manager is established. |
+
+### 🚨 Agent and Orchestration Issues
+
+| Issue | Solution |
+|-------|----------|
+| **"No response from agent"** | Check logs for timeout errors. |
+| **Missing visualization data** | Verify Azure storage account is configured with correct settings. |
+
+If you continue experiencing issues, please open an issue on the repository with detailed logs and reproduction steps.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
+---
+
+## Responsible AI Transparency FAQ
+Please refer to [Transparency FAQs](./TRANSPARENCY_FAQ.md) for responsible AI transparency details of this solution accelerator.
+
+---
+
+## 📚 Additional Resources
+
+- [Azure AI Foundry Agent Service](https://ai.azure.com/doc/azure/ai-foundry/agents/overview)
+- [Azure AI Foundry - Code Interpreter](https://learn.microsoft.com/en-us/azure/ai-services/agents/how-to/tools/code-interpreter)
+- [Microsoft Agent Framework](https://github.com/microsoft/agent-framework)
+
+---
+
+## Disclaimers
+
+To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, "Microsoft Products and Services"), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services. 
+
+You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting. 
+
+You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer's implementation of the Online Services. 
+
+You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgment of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.  
+
+BY ACCESSING OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT THE SOFTWARE IS NOT DESIGNED OR INTENDED TO SUPPORT ANY USE IN WHICH A SERVICE INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE COULD RESULT IN THE DEATH OR SERIOUS BODILY INJURY OF ANY PERSON OR IN PHYSICAL OR ENVIRONMENTAL DAMAGE (COLLECTIVELY, "HIGH-RISK USE"), AND THAT YOU WILL ENSURE THAT, IN THE EVENT OF ANY INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE, THE SAFETY OF PEOPLE, PROPERTY, AND THE ENVIRONMENT ARE NOT REDUCED BELOW A LEVEL THAT IS REASONABLY, APPROPRIATE, AND LEGAL, WHETHER IN GENERAL OR IN A SPECIFIC INDUSTRY. BY ACCESSING THE SOFTWARE, YOU FURTHER ACKNOWLEDGE THAT YOUR HIGH-RISK USE OF THE SOFTWARE IS AT YOUR OWN RISK.

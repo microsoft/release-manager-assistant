@@ -1,0 +1,64 @@
+name: Template Validation
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  template_validation_job:
+    runs-on: windows-latest
+    name: template validation
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/template-validation-action@Latest
+        id: validation
+        with:
+          useDevContainer: false
+        env:
+          TEMPLATE_VALIDATION_MODE: true
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # Project-specific variables (matches azure-dev.yaml/azure.yaml/main.parameters.json)
+          # Release Manager specific variables
+          # Azure AI Foundry Settings
+          AZURE_AI_FOUNDRY_RESOURCE_NAME: ${{ vars.AZURE_AI_FOUNDRY_RESOURCE_NAME }}
+          AZURE_AI_FOUNDRY_PROJECT_NAME: ${{ vars.AZURE_AI_FOUNDRY_PROJECT_NAME }}
+          AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME }}
+
+          # Azure OpenAI Settings
+          AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME: ${{ vars.AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME }}
+          AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: ${{ vars.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME }}
+
+          # Azure Content Safety Service Settings
+          AZURE_CONTENT_SAFETY_RESOURCE_NAME: ${{ vars.AZURE_CONTENT_SAFETY_RESOURCE_NAME }}
+
+          # JIRA Configuration
+          JIRA_SERVER_ENDPOINT: ${{ vars.JIRA_SERVER_ENDPOINT }}
+          JIRA_SERVER_USERNAME: ${{ vars.JIRA_SERVER_USERNAME }}
+          JIRA_SERVER_PASSWORD: ${{ vars.JIRA_SERVER_PASSWORD }}
+
+          # Azure DevOps Configuration
+          AZURE_DEVOPS_ORG_NAME: ${{ vars.AZURE_DEVOPS_ORG_NAME }}
+          AZURE_DEVOPS_EXT_PAT: ${{ vars.AZURE_DEVOPS_EXT_PAT }}
+
+          # Container images
+          SESSION_MANAGER_IMAGE_NAME: ${{ vars.SESSION_MANAGER_IMAGE_NAME }}
+          ORCHESTRATOR_IMAGE_NAME: ${{ vars.ORCHESTRATOR_IMAGE_NAME }}
+
+      - name: print result
+        run: |
+          # Change ${{ steps.validation.outputs.resultFile }} to windows path
+          resultFile_win=$(cygpath -w D:/)
+          echo $resultFile_win
+          cat $resultFile_win
+        shell: bash

@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: release-manager-assistant
+metadata:
+  template: release-manager-assistant@1.0.0
+  description: |
+    An AI-powered Release Manager Assistant that helps teams plan, visualize,
+    and track software releases using various tools like JIRA and Azure DevOps.
+
+    Features:
+    - Bring your own AI capabilities (BYOAI)
+    - Integration with Azure DevOps and JIRA
+    - AI-powered release planning and visualization
+    - Interactive dashboard for tracking progress
+
+services:
+  orchestrator:
+    project: ./src/backend
+    language: python
+    host: containerapp
+    docker:
+      path: ./services/orchestrator/Dockerfile
+
+  session-manager:
+    project: ./src/backend
+    language: python
+    host: containerapp
+    docker:
+      path: ./services/session_manager/Dockerfile
+
+  frontend:
+    project: ./src/frontend/react-app
+    language: js
+    host: staticwebapp
+    dist: dist
+
+hooks:
+  predeploy:
+    shell: pwsh
+    run: |
+      Write-Host "Building Frontend.."
+
+      # Get the Session Manager URL from azd environment
+      $sessionManagerUrl = (azd env get-values | Select-String "SESSION_MANAGER_URL" | ForEach-Object { $_.ToString().Split('=')[1].Trim('"') })
+      Write-Host "Session Manager URL: $sessionManagerUrl"
+
+      # Build the frontend with the environment variable
+      cd ./src/frontend/react-app
+      $env:VITE_SESSION_MANAGER_URL = $sessionManagerUrl
+      npm install
+      npm run build
+
+      # Copy the build files to a deployment directory
+      if (!(Test-Path "../../../infra/frontend-build")) {
+        New-Item -ItemType Directory -Force -Path "../../../infra/frontend-build"
+      }
+      Copy-Item -Path "./dist/*" -Destination "../../../infra/frontend-build/" -Recurse -Force
+
+infra:
+  provider: bicep
+  path: ./infra
+  module: main

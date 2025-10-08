@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  session-manager:
+    build:
+      context: ./src/backend
+      dockerfile: services/session_manager/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - KEYVAULT-URI=${KEYVAULT_URI:-}
+      - APPLICATION-INSIGHTS-CNX-STR=${APPLICATION_INSIGHTS_CNX_STR:-}
+      - AZURE-CONTENT-SAFETY-SERVICE=${AZURE_CONTENT_SAFETY_SERVICE:-}
+      - IMAGE_CONTENT_SAFETY_CHECK_ENABLED=true
+      - TEXT_CONTENT_SAFETY_CHECK_ENABLED=true
+      - REDIS-HOST=redis
+      - REDIS-PORT=6379
+      - REDIS-PASSWORD=${REDIS_PASSWORD:-}
+      - FOUNDRY-PROJECT-ENDPOINT=${FOUNDRY_PROJECT_ENDPOINT:-}
+      - REDIS-TASK-QUEUE-CHANNEL=request_task_queue
+      - REDIS-MESSAGE-QUEUE-CHANNEL=response_message_queue
+      - SESSION-MAX-RESPONSE-TIMEOUT-IN-SECONDS=300
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  orchestrator:
+    build:
+      context: ./src/backend
+      dockerfile: services/orchestrator/Dockerfile
+    ports:
+      - "5002:5002"
+    environment:
+      - KEYVAULT_URI=${KEYVAULT_URI:-}
+      - APPLICATION_INSIGHTS_CNX_STR=${APPLICATION_INSIGHTS_CNX_STR:-}
+      - CONSOLE_LOG_LEVEL=INFO
+      - AZURE_AI_PROJECT_ENDPOINT=${AZURE_AI_PROJECT_ENDPOINT:-}
+      - AZURE_AI_MODEL_DEPLOYMENT_NAME=${AZURE_AI_MODEL_DEPLOYMENT_NAME:-}
+      - AZURE_OPENAI_CHAT_DEPLOYMENT_NAME=${AZURE_OPENAI_CHAT_DEPLOYMENT_NAME:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+      - AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME:-}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-}
+      - REDIS-HOST=redis
+      - REDIS-PORT=6379
+      - REDIS-PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS-TASK-QUEUE-CHANNEL=request_task_queue
+      - REDIS-MESSAGE-QUEUE-CHANNEL=response_message_queue
+      - JIRA_SERVER_ENDPOINT=${JIRA_SERVER_ENDPOINT:-}
+      - JIRA_SERVER_USERNAME=${JIRA_SERVER_USERNAME:-}
+      - JIRA_SERVER_PASSWORD=${JIRA_SERVER_PASSWORD:-}
+      - AZURE_DEVOPS_ORG_NAME=${AZURE_DEVOPS_ORG_NAME:-}
+      - AZURE_DEVOPS_EXT_PAT=${AZURE_DEVOPS_EXT_PAT:-}
+      - STORAGE_ACCOUNT_NAME=${STORAGE_ACCOUNT_NAME:-}
+      - VISUALIZATION_DATA_CONTAINER=visualizations
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./src/frontend/react-app
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_SESSION_MANAGER_URL=http://localhost:5000
+    depends_on:
+      - session-manager
+
+volumes:
+  redis_data:

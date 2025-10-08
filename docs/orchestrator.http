@@ -1,0 +1,36 @@
+### Orchestrator service - HTTP examples
+
+# Base host variable (adjust host/port as needed)
+@host = http://localhost:5002
+
+### Health check
+GET {{host}}/health
+
+### Minimal orchestration request
+POST {{host}}/orchestrate
+Content-Type: application/json
+
+{
+  "session_id": "test-session-1",
+  "dialog_id": "dialog-1",
+  "user_id": "anonymous",
+  "message": "Get all works items currently in progress and help visualize the data.",
+  "locale": "en-US"
+}
+
+### Orchestration request with overrides
+POST {{host}}/orchestrate
+Content-Type: application/json
+
+{
+  "session_id": "test-session-2",
+  "dialog_id": "dialog-2",
+  "user_id": "alice@example.com",
+  "message": "List open JIRA issues blocking the release",
+  "locale": "en-US",
+  "overrides": {
+    "orchestrator_runtime": {
+      "config_version": "v2"
+    }
+  }
+}

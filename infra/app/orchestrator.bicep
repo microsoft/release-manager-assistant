@@ -25,6 +25,10 @@ param redisHost string
 @description('The Redis port')
 param redisPort int
 
+@description('The Redis password')
+@secure()
+param redisPassword string
+
 @description('The storage account name')
 param storageAccountName string
 
@@ -34,30 +38,51 @@ param containerRegistryId string
 @description('The Container Registry login server')
 param containerRegistryLoginServer string
 
-@description('The Container Registry admin username')
-param containerRegistryUsername string = ''
-
-@description('The Container Registry admin password')
-@secure()
-param containerRegistryPassword string = ''
-
 @description('The AI Foundry endpoint')
 param aiFoundryEndpoint string
-
-@description('The resource ID of the AI Foundry account')
-param aiFoundryResourceId string
 
 @description('The Azure AI Model Deployment Name provided by the user')
 param aiModelDeploymentName string = ''
 
 @description('The Azure OpenAI endpoint provided by the user')
+@secure()
 param openaiEndpoint string = ''
 
 @description('The Azure OpenAI Responses Deployment Name provided by the user')
+@secure()
 param openaiResponsesDeploymentName string = ''
 
 @description('The Azure OpenAI Embedding Deployment Name provided by the user')
+@secure()
 param openaiEmbeddingDeploymentName string = ''
+
+@description('The Application Insights Connection String')
+@secure()
+param applicationInsightsConnectionString string = ''
+
+@description('Jira server endpoint')
+@secure()
+param jiraServerEndpoint string = ''
+
+@description('Jira server username')
+@secure()
+param jiraServerUsername string = ''
+
+@description('Jira server password')
+@secure()
+param jiraServerPassword string = ''
+
+@description('Azure DevOps organization name')
+@secure()
+param azureDevOpsOrgName string = ''
+
+@description('Azure DevOps PAT token')
+@secure()
+param azureDevOpsExtPat string = ''
+
+@description('Storage account key')
+@secure()
+param storageAccountKey string = ''
 
 resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: name
@@ -74,13 +99,7 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
         external: true
         targetPort: 5002
       }
-      registries: !empty(containerRegistryUsername) && !empty(containerRegistryPassword) ? [
-        {
-          server: containerRegistryLoginServer
-          username: containerRegistryUsername
-          passwordSecretRef: 'registry-password'
-        }
-      ] : [
+      registries: [
         {
           server: containerRegistryLoginServer
           identity: 'system'
@@ -89,62 +108,47 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
       secrets: [
         {
           name: 'app-insights-connection-string'
-          keyVaultUrl: '${keyVaultUri}secrets/app-insights-connection-string'
-          identity: 'system'
+          value: applicationInsightsConnectionString
         }
         {
           name: 'redis-password'
-          keyVaultUrl: '${keyVaultUri}secrets/redis-password'
-          identity: 'system'
-        }
-        {
-          name: 'registry-password'
-          value: containerRegistryPassword
+          value: redisPassword
         }
         {
           name: 'azure-openai-endpoint'
-          keyVaultUrl: '${keyVaultUri}secrets/azure-openai-endpoint'
-          identity: 'system'
+          value: openaiEndpoint
         }
         {
           name: 'azure-openai-responses-deployment-name'
-          keyVaultUrl: '${keyVaultUri}secrets/azure-openai-responses-deployment-name'
-          identity: 'system'
+          value: openaiResponsesDeploymentName
         }
         {
           name: 'azure-openai-embedding-deployment-name'
-          keyVaultUrl: '${keyVaultUri}secrets/azure-openai-embedding-deployment-name'
-          identity: 'system'
+          value: openaiEmbeddingDeploymentName
         }
         {
           name: 'jira-server-endpoint'
-          keyVaultUrl: '${keyVaultUri}secrets/jira-server-endpoint'
-          identity: 'system'
+          value: jiraServerEndpoint
         }
         {
           name: 'jira-server-username'
-          keyVaultUrl: '${keyVaultUri}secrets/jira-server-username'
-          identity: 'system'
+          value: jiraServerUsername
         }
         {
           name: 'jira-server-password'
-          keyVaultUrl: '${keyVaultUri}secrets/jira-server-password'
-          identity: 'system'
+          value: jiraServerPassword
         }
         {
           name: 'azure-devops-org-name'
-          keyVaultUrl: '${keyVaultUri}secrets/azure-devops-org-name'
-          identity: 'system'
+          value: azureDevOpsOrgName
         }
         {
           name: 'azure-devops-ext-pat'
-          keyVaultUrl: '${keyVaultUri}secrets/azure-devops-ext-pat'
-          identity: 'system'
+          value: azureDevOpsExtPat
         }
         {
           name: 'storage-account-key'
-          keyVaultUrl: '${keyVaultUri}secrets/storage-account-key'
-          identity: 'system'
+          value: storageAccountKey
         }
       ]
     }
@@ -152,7 +156,7 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           name: 'orchestrator'
-          image: imageName
+          image: !empty(imageName) ? imageName : 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           resources: {
             cpu: json('2')
             memory: '4Gi'
@@ -164,7 +168,7 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'APPLICATION-INSIGHTS-CNX-STR'
-              secretRef: 'app-insights-connection-string'
+              value: applicationInsightsConnectionString
             }
             {
               name: 'SERVICE-HOST'
@@ -179,24 +183,20 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
               value: aiFoundryEndpoint
             }
             {
-              name: 'AZURE-AI-MODEL-DEPLOYMENT-NAME'
+              name: 'AZURE_AI_MODEL_DEPLOYMENT_NAME'
               value: aiModelDeploymentName
-              secretRef: 'azure-openai-responses-deployment-name'
             }
             {
-              name: 'AZURE-OPENAI-ENDPOINT'
+              name: 'AZURE_OPENAI_ENDPOINT'
               value: openaiEndpoint
-              secretRef: 'azure-openai-endpoint'
             }
             {
-              name: 'AZURE-OPENAI-RESPONSES-DEPLOYMENT-NAME'
+              name: 'AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME'
               value: openaiResponsesDeploymentName
-              secretRef: 'azure-openai-responses-deployment-name'
             }
             {
-              name: 'AZURE-OPENAI-EMBEDDING-DEPLOYMENT-NAME'
+              name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME'
               value: openaiEmbeddingDeploymentName
-              secretRef: 'azure-openai-embedding-deployment-name'
             }
             {
               name: 'REDIS-HOST'
@@ -208,7 +208,7 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'REDIS-PASSWORD'
-              secretRef: 'redis-password'
+              value: redisPassword
             }
             {
               name: 'REDIS-TASK-QUEUE-CHANNEL'
@@ -228,23 +228,23 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'JIRA-SERVER-ENDPOINT'
-              secretRef: 'jira-server-endpoint'
+              value: jiraServerEndpoint
             }
             {
               name: 'JIRA-SERVER-USERNAME'
-              secretRef: 'jira-server-username'
+              value: jiraServerUsername
             }
             {
               name: 'JIRA-SERVER-PASSWORD'
-              secretRef: 'jira-server-password'
+              value: jiraServerPassword
             }
             {
               name: 'AZURE-DEVOPS-ORG-NAME'
-              secretRef: 'azure-devops-org-name'
+              value: azureDevOpsOrgName
             }
             {
               name: 'AZURE-DEVOPS-EXT-PAT'
-              secretRef: 'azure-devops-ext-pat'
+              value: azureDevOpsExtPat
             }
           ]
         }
@@ -289,17 +289,6 @@ resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
-// Role assignment for AI Foundry User access
-resource aiFoundryUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(orchestratorApp.id, aiFoundryResourceId, 'Azure AI User')
-  scope: resourceGroup()
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI User
-    principalId: orchestratorApp.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(orchestratorApp.id, containerRegistryId, 'AcrPull') // Unique name for the role assignment
   scope: resourceGroup()
@@ -313,3 +302,4 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 output name string = orchestratorApp.name
 output uri string = 'https://${orchestratorApp.properties.configuration.ingress.fqdn}'
 output id string = orchestratorApp.id
+output principalId string = orchestratorApp.identity.principalId

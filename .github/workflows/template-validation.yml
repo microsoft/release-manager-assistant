@@ -51,10 +51,6 @@ jobs:
           AZURE_DEVOPS_ORG_NAME: ${{ vars.AZURE_DEVOPS_ORG_NAME }}
           AZURE_DEVOPS_EXT_PAT: ${{ vars.AZURE_DEVOPS_EXT_PAT }}
 
-          # Container images
-          SESSION_MANAGER_IMAGE_NAME: ${{ vars.SESSION_MANAGER_IMAGE_NAME }}
-          ORCHESTRATOR_IMAGE_NAME: ${{ vars.ORCHESTRATOR_IMAGE_NAME }}
-
       - name: print result
         run: |
           # Change ${{ steps.validation.outputs.resultFile }} to windows path

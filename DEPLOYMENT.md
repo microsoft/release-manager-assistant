@@ -4,6 +4,29 @@ This guide walks you through deploying the Release Manager Assistant to Azure us
 
 ## 🚀 Quick Start
 
+### Option 1: Using deploy.ps1 Script (Recommended)
+
+The easiest way to deploy the Release Manager Assistant is to use the included PowerShell deployment script:
+
+```powershell
+# Clone and navigate to the project
+cd release_manager
+
+# Run the deployment script
+./deploy.ps1
+```
+
+This script handles the entire deployment process including:
+- Environment setup and validation
+- Azure infrastructure provisioning
+- Building and pushing container images
+- Deploying all services with automatic retries for resilience
+- Setting up secrets and configurations
+
+### Option 2: Using azd Commands Directly
+
+If you prefer more control over the deployment process:
+
 ```bash
 # Clone and navigate to the project
 cd release_manager
@@ -75,12 +98,23 @@ azd up
    cp .env.template .env
    ```
 
+   > **Note:** When using the `deploy.ps1` script, it will automatically create a `.env` file from the template if one doesn't exist and prompt you to edit it.
+
 2. **Configure required variables in `.env`:**
    ```bash
    # Required - Choose your deployment settings
    AZURE_ENV_NAME=myreleasemgr           # Unique name for your environment
    AZURE_LOCATION=eastus2                # Azure region
    AZURE_SUBSCRIPTION_ID=your-sub-id     # Your Azure subscription ID
+   
+   # BYOAI - Bring Your Own AI resources (Required)
+   AZURE_AI_FOUNDRY_RESOURCE_NAME=your-ai-resource-name
+   AZURE_AI_FOUNDRY_PROJECT_NAME=your-project-name
+   AZURE_AI_MODEL_DEPLOYMENT_NAME=gpt-4o
+   AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+   AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME=gpt-4o
+   AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME=text-embedding-ada-002
+   AZURE_CONTENT_SAFETY_RESOURCE_NAME=your-content-safety-resource
    
    # Optional - External integrations
    JIRA_SERVER_ENDPOINT=https://your-org.atlassian.net
@@ -126,7 +160,27 @@ az cognitiveservices account list-skus --location eastus2
 
 ## 🚀 Deployment Steps
 
-### Step 1: Initialize Azure Developer CLI
+### Option 1: Using deploy.ps1 Script (Recommended)
+
+```powershell
+# Navigate to the project directory
+cd path/to/release_manager
+
+# Run the deployment script
+./deploy.ps1
+```
+
+This script will:
+1. Check prerequisites and validate environment
+2. Create `.env` file if it doesn't exist (prompting for edits)
+3. Initialize Azure Developer CLI
+4. Deploy infrastructure with proper BYOAI settings
+5. Handle container image deployment with retry logic
+6. Configure all services with appropriate settings
+
+### Option 2: Manual Deployment Steps
+
+#### Step 1: Initialize Azure Developer CLI
 
 ```bash
 # Navigate to the project directory
@@ -138,7 +192,7 @@ azd init
 # The project already has azure.yaml, so this will detect it automatically
 ```
 
-### Step 2: Deploy Infrastructure and Application
+#### Step 2: Deploy Infrastructure and Application
 
 ```bash
 # Deploy everything with a single command
@@ -196,20 +250,21 @@ After successful deployment, you'll receive:
 
 ## ⚙️ Post-Deployment Configuration
 
-### 1. Verify AI Models
+### 1. Verify BYOAI Configuration
 
-Check that Azure AI models are deployed:
+When using your own AI models (BYOAI mode), ensure your configuration is properly connected:
 
 ```bash
-# List deployed models
-az cognitiveservices account deployment list \
-  --name <ai-account-name> \
-  --resource-group <resource-group>
+# Check configuration in Key Vault
+az keyvault secret show --vault-name kv-<env-name> --name azure-ai-foundry-project-name
+
+# Verify orchestrator configuration
+az containerapp show --name orchestrator --resource-group rg-<env-name> --query configuration.ingress.targetPort
 ```
 
-Expected models:
-- `gpt-4o` (Chat completion)
-- `text-embedding-2-ada` (Embeddings)
+The application relies on your pre-configured AI models:
+- Chat completion model (e.g., `gpt-4o`)
+- Embeddings model (e.g., `text-embedding-ada-002`)
 
 ### 2. Configure External Integrations
 
@@ -241,7 +296,25 @@ Expected models:
    az keyvault secret set --vault-name <keyvault-name> --name "azure-devops-pat" --value "your-pat-token"
    ```
 
-### 3. Test the Application
+### 3. Frontend Configuration
+
+The frontend application needs to know the Session Manager URL to establish WebSocket connections. This is automatically configured during deployment:
+
+```bash
+# Check the configured Session Manager URL
+azd env get-values | grep SESSION_MANAGER_URL
+
+# Manually set the Session Manager URL if needed
+azd env set VITE_SESSION_MANAGER_URL=https://your-session-manager-url
+```
+
+The deployment process:
+1. Gets the Session Manager URL from the environment
+2. Sets it as an environment variable for the frontend build
+3. Configures it in the Static Web App settings
+4. Updates the basic HTML frontend with the correct WebSocket URL
+
+### 4. Test the Application
 
 1. **Access the frontend** at the provided URL
 2. **Create a test session** to verify backend connectivity
@@ -272,7 +345,17 @@ az provider register --namespace Microsoft.KeyVault
 az provider register --namespace Microsoft.Storage
 ```
 
-#### 2. Container Apps Fail to Start
+#### 2. Container Apps Deployment Failures
+
+If Container Apps deployment fails during the initial deployment, try using the `deploy.ps1` script which includes automatic retry logic:
+
+```powershell
+./deploy.ps1
+```
+
+The script will detect failures and retry deployments with increasing backoff intervals.
+
+You can also check container logs:
 
 ```bash
 # Check container logs
@@ -280,7 +363,22 @@ az containerapp logs show --name session-manager --resource-group <rg-name>
 az containerapp logs show --name orchestrator --resource-group <rg-name>
 ```
 
-#### 3. Frontend Build Fails
+#### 3. Frontend WebSocket Connection Issues
+
+If the frontend cannot connect to the Session Manager service:
+
+```bash
+# Verify the Session Manager URL in environment
+azd env get-values | grep SESSION_MANAGER_URL
+
+# Check the frontend environment settings
+az staticwebapp appsettings show --name <staticwebapp-name> --resource-group <rg-name>
+
+# Redeploy the frontend with correct Session Manager URL
+azd deploy frontend --force
+```
+
+#### 4. Frontend Build Fails
 
 ```bash
 # Manual frontend build
@@ -312,7 +410,10 @@ All services include health check endpoints:
 ### Update Application
 
 ```bash
-# Update code and redeploy
+# Update using deploy.ps1 (recommended for reliability)
+./deploy.ps1
+
+# Or update with azd commands
 azd deploy
 
 # Update only specific service
@@ -382,8 +483,11 @@ azd down --force
 
 ## Quick Reference Commands
 
-```bash
-# Full deployment
+```powershell
+# Full deployment (recommended)
+./deploy.ps1
+
+# Alternative deployment
 azd up
 
 # Update application only
@@ -396,7 +500,7 @@ azd show
 azd monitor --live
 
 # Clean up
-azd down
+azd down --force --purge
 ```
 
 Happy deploying! 🚀

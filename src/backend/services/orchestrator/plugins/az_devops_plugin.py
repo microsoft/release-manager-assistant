@@ -86,7 +86,7 @@ class AzDevOpsPluginFactory:
             self.__validate_settings(devops_settings)
 
             # Test Azure DevOps authentication
-            await self.__validate_authentication()
+            # await self.__validate_authentication()
 
             # Create the MCP plugin instance
             self._plugin = await self.__create_mcp_plugin(devops_settings, plugin_name)

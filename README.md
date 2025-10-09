@@ -7,7 +7,16 @@
   <p><a href="https://placeholder-for-rma-demo-video.com">▶️ Watch Demo Video</a></p>
 </div>
 
-## 🚀 Overview
+<div align="center">
+
+[**SOLUTION OVERVIEW**](#solution-overview) \| [**QUICK DEPLOY**](#quick-deploy) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
+
+</div>
+<br/>
+
+<h2>
+SOLUTION OVERVIEW
+</h2>
 
 In modern software development, **Release Managers** play a pivotal role bridging the gap between development and operations. As the orchestrators of software deployment, they ensure that releases are timely, efficient, and risk-mitigated. However, increasing complexity and fragmentation across systems have made this role more challenging than ever.
 
@@ -87,40 +96,9 @@ The architecture is built on a modular and secure AI-native design leveraging:
 
 ---
 
-## ARCHITECTURE DIAGRAM
-
-This diagram provides a visual representation of how the **JIRA Agent**, **Azure DevOps Agent**, **Visualization Agent** and **Notification Agent** collaborate to streamline release planning and execution for a release manager.
-
-> **Note**: The **Azure DevOps Agent** shown in the diagram represents the current MCP-based implementation that replaced the deprecated MySQL database-backed DevOps Agent.
-
-![RMA Solution Architecture](./docs/ReleaseManagerAssistant_Architecture.png)
-
-*Diagram above highlights components in the end-to-end system run that run locally (highlighted in green) and components that run in the cloud (highlighted in blue).*
-
----
-
-## ⚠️ Deprecated Components
-
-**Important Notice**: As of the current release, the following components have been deprecated and are no longer used by the orchestrator:
-
-### Deprecated MySQL Database-Backed DevOps Agent
-
-- **File Location**: `agents/devops_agent.py` *(retained for archival purposes)*
-- **Associated Plugin**: `plugins/devops_plugin.py` *(retained for archival purposes)*
-- **Reason for Deprecation**: The original DevOps Agent relied on MySQL database connectivity and required maintaining a separate database infrastructure
-- **Replacement**: **Azure DevOps Agent** (`agents/azure_devops_agent.py`) - Uses Model Context Protocol (MCP) for direct Azure DevOps API integration
-- **Benefits of New Implementation**: 
-  - No database infrastructure required
-  - Direct Azure DevOps API integration via MCP
-  - Automatic tool discovery and comprehensive DevOps operations
-  - Better security with native Azure authentication
-  - Simplified deployment and maintenance
-
-> **Technical Note**: The deprecated files are retained in the codebase for technical reference and demonstration purposes only. They should not be used in any execution paths or new implementations.
-
----
-
-## 🛠️ Getting Started
+<h2>
+QUICK DEPLOY
+</h2>
 
 > **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.
 
@@ -145,7 +123,52 @@ For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIO
 
 ---
 
-## 🔗 Integrations Supported
+<h2>
+BUSINESS SCENARIO
+</h2>
+
+### 🧩 Key Challenges
+
+- ❌ Fragmented release data across platforms
+- ❌ Lack of real-time release health visibility
+- ❌ High manual effort in compiling readiness reports
+- ❌ Difficulty managing cross-team/service dependencies
+- ❌ Visualizing complex data across multiple systems
+
+
+### ✅ Key Features
+
+#### 🔄 Release Planning & Coordination
+
+- **Intelligent Agent Orchestration**: Multi-agent system with smart planning that routes queries to appropriate agents (JIRA, DevOps, Visualization, Fallback)
+- **Real-time dependency mapping and release health assessment**: Seamless integration between JIRA issues and Azure DevOps work items
+- **Advanced Visualization**: Interactive charts, graphs, and visual analysis using code interpreter capabilities
+- **Cross-Release Tracking**: Query and visualize data across multiple releases with intelligent filtering
+
+#### 🕓 Scheduling & Readiness Automation
+
+- **Release Timeline Analysis**: Intelligent forecasting and delivery date estimation
+- **Confirmation-based Updates**: Safe update mechanisms with user confirmation before making changes
+
+#### 🌐 Cross-System Collaboration
+
+- **Enhanced MCP Integration**: Comprehensive Azure DevOps integration via Model Context Protocol with:
+  - Work item management (create, read, update, search)
+  - Build and release tracking
+  - Repository and project information
+  - Team and iteration management
+  - Pull request tracking
+- **Flexible Authentication**: Support for both Azure CLI and Personal Access Token authentication
+- **JIRA Deep Integration**: Custom field support, JQL optimization, and secure credential handling
+- **Unified, contextual insights**: Data synthesis from disparate systems with intelligent agent coordination
+
+---
+
+<h2>
+SUPPORTING DOCUMENTATION
+</h2>
+
+### 🔗 Integrations Supported
 
 - **[JIRA SDK](https://jira.readthedocs.io/)** - Complete JIRA API integration with custom field support
 - **[JIRA API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)** - Direct REST API access with JQL optimization

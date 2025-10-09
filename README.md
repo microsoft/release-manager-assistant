@@ -22,56 +22,6 @@ In modern software development, **Release Managers** play a pivotal role bridgin
 
 The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
-**Latest Updates:**
-- **Enhanced MCP Integration**: Full Azure DevOps integration via Model Context Protocol with advanced authentication options
-- **Intelligent Agent Orchestration**: Multi-agent planning system with smart fallback mechanisms
-- **Advanced Visualization**: Code interpreter-powered charts and graphs for release insights
-- **Comprehensive Evaluation Framework**: Built-in evaluation metrics and agent-specific testing capabilities
-- **Flexible Authentication**: Support for both Azure CLI and Personal Access Token authentication
-- **Robust Error Handling**: Graceful degradation with fallback agents when services are unavailable
-
----
-
-## 🧩 Key Challenges
-
-- ❌ Fragmented release data across platforms
-- ❌ Lack of real-time release health visibility
-- ❌ High manual effort in compiling readiness reports
-- ❌ Difficulty managing cross-team/service dependencies
-- ❌ Visualizing complex data across multiple systems
-- ❌ Notifying stakeholders on change in the system
-
----
-
-## ✅ What the RMA Solves
-
-### 🔄 Release Planning & Coordination
-
-- **Intelligent Agent Orchestration**: Multi-agent system with smart planning that routes queries to appropriate agents (JIRA, DevOps, Visualization, Fallback)
-- **Real-time dependency mapping and release health assessment**: Seamless integration between JIRA issues and Azure DevOps work items
-- **Advanced Visualization**: Interactive charts, graphs, and visual analysis using code interpreter capabilities
-- **Cross-Release Tracking**: Query and visualize data across multiple releases with intelligent filtering
-
-### 🕓 Scheduling & Readiness Automation
-
-- **Smart notifications**: Integrated email notification system via Microsoft Graph APIs
-- **Issue and stakeholder updates**: Automated status updates via integrated channels (emails)
-- **Release Timeline Analysis**: Intelligent forecasting and delivery date estimation
-- **Confirmation-based Updates**: Safe update mechanisms with user confirmation before making changes
-
-### 🌐 Cross-System Collaboration
-
-- **Enhanced MCP Integration**: Comprehensive Azure DevOps integration via Model Context Protocol with:
-  - Work item management (create, read, update, search)
-  - Build and release tracking
-  - Repository and project information
-  - Team and iteration management
-  - Pull request tracking
-- **Flexible Authentication**: Support for both Azure CLI and Personal Access Token authentication
-- **JIRA Deep Integration**: Custom field support, JQL optimization, and secure credential handling
-- **Microsoft Graph APIs**: Enterprise identity integration and notification capabilities
-- **Unified, contextual insights**: Data synthesis from disparate systems with intelligent agent coordination
-
 ---
 
 ## 🧠 Solution Architecture
@@ -87,14 +37,10 @@ The architecture is built on a modular and secure AI-native design leveraging:
 - **Azure AI Foundry Service**: Cloud-based agents with integrated tools (Code Interpreter, SharePoint)
 - **Semantic Kernel Framework**: Advanced agent orchestration, memory management, and plugin integration
 - **Model Context Protocol (MCP)**: Standardized Azure DevOps integration with auto-discovery of tools and capabilities
-- **Microsoft Graph API**: Enterprise identity integration and email notification system
 - **Azure Key Vault & Azure Storage**: Secure secret and data management with encrypted credential storage
-- **Comprehensive Evaluation Framework**: Built-in metrics for agent performance and end-to-end validation
 - **Redis Integration**: Session management and message queuing for scalable operations
 
-*For setting up email notifications, additional setup is required. For instructions, please refer to this guide: [Microsoft Email Notifications Setup](plugins/NOTIFICATIONS.md)*
-
----
+![RMA Solution Architecture](./docs/ReleaseManagerAssistant_Architecture.png)
 
 <h2>
 QUICK DEPLOY

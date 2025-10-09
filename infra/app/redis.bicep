@@ -18,6 +18,9 @@ resource redisApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: name
   location: location
   tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     environmentId: containerAppsEnvironmentId
     configuration: {

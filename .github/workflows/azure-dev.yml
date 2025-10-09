@@ -1,45 +1,60 @@
-# Run when commits are pushed to main
+name: Template Validation Workflow
 on:
-  workflow_dispatch:
   push:
-    # Run when commits are pushed to mainline branch (main or master)
-    # Set this to the mainline branch you are using
     branches:
       - main
+  workflow_dispatch:
 
-# Set up permissions for deploying with secretless Azure federated credentials
-# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
 permissions:
-  id-token: write
   contents: read
-
+  id-token: write
+  pull-requests: write
 
 jobs:
-  build:
+  template_validation_job:
     runs-on: ubuntu-latest
-    env:
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+    name: template validation
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install azd
-        uses: Azure/setup-azd@v2
-      - name: Log in with Azure (Federated Credentials)
-        run: |
-          azd auth login `
-            --client-id "$Env:AZURE_CLIENT_ID" `
-            --federated-credential-provider "github" `
-            --tenant-id "$Env:AZURE_TENANT_ID"
-        shell: pwsh
 
+      - name: Validate Template
+        uses: microsoft/template-validation-action@Latest
+        with:
+          validateAzd: true
+          useDevContainer: false
+        id: validation
+        env:
+          #AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Provision Infrastructure
-        run: azd provision --no-prompt
+          # Project-specific variables (matches azure-dev.yaml/azure.yaml/main.parameters.json)
+          # Release Manager specific variables
+          # Azure AI Foundry Settings
+          AZURE_AI_FOUNDRY_RESOURCE_NAME: ${{ vars.AZURE_AI_FOUNDRY_RESOURCE_NAME }}
+          AZURE_AI_FOUNDRY_PROJECT_NAME: ${{ vars.AZURE_AI_FOUNDRY_PROJECT_NAME }}
+          AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME }}
 
-      - name: Deploy Application
-        run: azd deploy --no-prompt
-        
+          # Azure OpenAI Settings
+          AZURE_OPENAI_ENDPOINT: ${{ vars.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME: ${{ vars.AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME }}
+          AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: ${{ vars.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME }}
+
+          # Azure Content Safety Service Settings
+          AZURE_CONTENT_SAFETY_RESOURCE_NAME: ${{ vars.AZURE_CONTENT_SAFETY_RESOURCE_NAME }}
+
+          # JIRA Configuration
+          JIRA_SERVER_ENDPOINT: ${{ vars.JIRA_SERVER_ENDPOINT }}
+          JIRA_SERVER_USERNAME: ${{ vars.JIRA_SERVER_USERNAME }}
+          JIRA_SERVER_PASSWORD: ${{ secrets.JIRA_SERVER_PASSWORD }}
+
+          # Azure DevOps Configuration
+          AZURE_DEVOPS_ORG_NAME: ${{ secrets.AZURE_DEVOPS_ORG_NAME }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+
+      - name: print result
+        run: cat ${{ steps.validation.outputs.resultFile }}

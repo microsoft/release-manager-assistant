@@ -42,11 +42,11 @@ jobs:
           # JIRA Configuration
           JIRA_SERVER_ENDPOINT: ${{ vars.JIRA_SERVER_ENDPOINT }}
           JIRA_SERVER_USERNAME: ${{ vars.JIRA_SERVER_USERNAME }}
-          JIRA_SERVER_PASSWORD: ${{ vars.JIRA_SERVER_PASSWORD }}
+          JIRA_SERVER_PASSWORD: ${{ secrets.JIRA_SERVER_PASSWORD }}
 
           # Azure DevOps Configuration
-          AZURE_DEVOPS_ORG_NAME: ${{ vars.AZURE_DEVOPS_ORG_NAME }}
-          AZURE_DEVOPS_EXT_PAT: ${{ vars.AZURE_DEVOPS_EXT_PAT }}
+          AZURE_DEVOPS_ORG_NAME: ${{ secrets.AZURE_DEVOPS_ORG_NAME }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
 
       - name: print result
         run: cat ${{ steps.validation.outputs.resultFile }}

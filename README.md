@@ -22,20 +22,20 @@ In modern software development, **Release Managers** play a pivotal role bridgin
 
 The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
----
+The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
-## 🧠 Solution Architecture
+### 🧠 Solution Architecture
 
 The architecture is built on a modular and secure AI-native design leveraging:
 
 - **Multi-Agent Orchestration System**: Intelligent planning agent that coordinates between:
   - **JIRA Agent**: Handles customer issues with JQL optimization and custom field support
-  - **Azure DevOps Agent**: Manages Azure DevOps work items via MCP with comprehensive tool discovery *(replaces deprecated database-backed DevOps Agent)*
+  - **Azure DevOps Agent**: Manages Azure DevOps work items via MCP with comprehensive tool discovery
   - **Visualization Agent**: Creates interactive charts and graphs using code interpreter capabilities
   - **Planner Agent**: Routes queries intelligently based on user intent and system capabilities  
   - **Fallback Agent**: Provides graceful degradation when services are unavailable
 - **Azure AI Foundry Service**: Cloud-based agents with integrated tools (Code Interpreter, SharePoint)
-- **Semantic Kernel Framework**: Advanced agent orchestration, memory management, and plugin integration
+- **Microsoft Agent Framework**: Advanced agent orchestration, memory management, and tools integration
 - **Model Context Protocol (MCP)**: Standardized Azure DevOps integration with auto-discovery of tools and capabilities
 - **Azure Key Vault & Azure Storage**: Secure secret and data management with encrypted credential storage
 - **Redis Integration**: Session management and message queuing for scalable operations
@@ -48,7 +48,7 @@ QUICK DEPLOY
 
 > **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.
 
-For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIONS](SETUP.md)
+For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIONS](DEPLOYMENT.md)
 
 ### Prerequisites
 
@@ -126,23 +126,21 @@ SUPPORTING DOCUMENTATION
     - Teams and Iterations (project management)
     - Search capabilities across all Azure DevOps entities
   > ⚠️ **Warning:** Azure DevOps API access is subject to user permissions. Please make sure right permissions are configured to access all features/tools exposed as part of the MCP server.
-- **[Microsoft Graph API](https://learn.microsoft.com/en-us/graph/overview)** - Enterprise notifications and identity management
 - **[Azure AI Foundry](https://ai.azure.com/doc/azure/ai-foundry/agents/overview)** - Cloud-based agent services with code interpreter capabilities
 - **Redis** - Session management and message queuing for scalable operations
 
----
 
-##  🔧 Troubleshooting Guide
+###  🔧 Troubleshooting Guide
 
 Below are solutions for common issues encountered when setting up or running the Release Manager Assistant:
 
-### 🔄 Environment and Setup Issues
+#### 🔄 Environment and Setup Issues
 
 | Issue | Solution |
 |-------|----------|
 | **VS Code debugging not working** | Ensure the PYTHONPATH environment variable is set correctly in launch.json and the correct Python interpreter is selected. |
 
-### 🔌 Integration and Connection Issues
+#### 🔌 Integration and Connection Issues
 
 | Issue | Solution |
 |-------|----------|
@@ -150,7 +148,7 @@ Below are solutions for common issues encountered when setting up or running the
 | **"JIRA API connection failed"** | Verify your JIRA server URL, username, and password in the .env file. Check network connectivity and firewall settings. |
 | **WebSocket connection errors** | Check that Session Manager is started before accessing the frontend. Verify Redis is running and accessible. |
 
-### 🖥️ Frontend Issues
+#### 🖥️ Frontend Issues
 
 | Issue | Solution |
 |-------|----------|
@@ -158,7 +156,7 @@ Below are solutions for common issues encountered when setting up or running the
 | **"Failed to load resource" errors in browser** | Check browser console for specific error messages. *Ensure Session Manager is running before accessing the frontend.* |
 | **Blank or unresponsive UI** | Verify WebSocket connection to Session Manager is established. |
 
-### 🚨 Agent and Orchestration Issues
+#### 🚨 Agent and Orchestration Issues
 
 | Issue | Solution |
 |-------|----------|
@@ -171,7 +169,7 @@ If you continue experiencing issues, please open an issue on the repository with
 
 ## 📄 License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
@@ -192,7 +190,7 @@ Please refer to [Transparency FAQs](./TRANSPARENCY_FAQ.md) for responsible AI tr
 
 To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, "Microsoft Products and Services"), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services. 
 
-You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting. 
+You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting.
 
 You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer's implementation of the Online Services. 
 

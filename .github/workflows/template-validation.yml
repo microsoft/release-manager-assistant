@@ -1,5 +1,5 @@
-name: Template Validation
-on:
+name: Template Validation Workflow
+on: 
   workflow_dispatch:
 
 permissions:
@@ -9,17 +9,14 @@ permissions:
 
 jobs:
   template_validation_job:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     name: template validation
     steps:
       - uses: actions/checkout@v4
 
       - uses: microsoft/template-validation-action@Latest
         id: validation
-        with:
-          useDevContainer: false
         env:
-          TEMPLATE_VALIDATION_MODE: true
           AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -52,9 +49,4 @@ jobs:
           AZURE_DEVOPS_EXT_PAT: ${{ vars.AZURE_DEVOPS_EXT_PAT }}
 
       - name: print result
-        run: |
-          # Change ${{ steps.validation.outputs.resultFile }} to windows path
-          resultFile_win=$(cygpath -w D:/)
-          echo $resultFile_win
-          cat $resultFile_win
-        shell: bash
+        run: cat ${{ steps.validation.outputs.resultFile }}

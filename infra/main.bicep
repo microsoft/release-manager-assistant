@@ -269,7 +269,9 @@ module staticWebApp './app/frontend.bicep' = {
 }
 
 // Outputs
+@secure()
 output AZURE_LOCATION string = location
+
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP_NAME string = rg.name
 

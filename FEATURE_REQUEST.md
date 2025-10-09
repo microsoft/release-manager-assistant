@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest an idea for Release Manager Assistant
 title: ''
 labels: enhancement
 assignees: ''

@@ -9,7 +9,7 @@
 
 <div align="center">
 
-[**SOLUTION OVERVIEW**](#solution-overview) \| [**QUICK DEPLOY**](#quick-deploy) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
+[**SOLUTION OVERVIEW**](#solution-overview) \| [**GETTING STARTED**](#getting_started) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
 
 </div>
 <br/>
@@ -43,7 +43,7 @@ The architecture is built on a modular and secure AI-native design leveraging:
 ![RMA Solution Architecture](./docs/ReleaseManagerAssistant_Architecture.png)
 
 <h2>
-QUICK DEPLOY
+GETTING STARTED
 </h2>
 
 > **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.

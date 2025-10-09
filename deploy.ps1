@@ -1,7 +1,7 @@
 # PowerShell deployment script for Release Manager Assistant
 
-# Exit Write-Host "🚀 Provisioning infrastructure, building images, and deploying services..." -ForegroundColor Blue
-azd up --no-promptrorActionPreference = "Stop"
+# Set strict error handling
+$ErrorActionPreference = "Stop"
 
 Write-Host "🚀 Deploying Release Manager Assistant to Azure..." -ForegroundColor Green
 
@@ -72,22 +72,38 @@ try {
 Write-Host "📦 Provisioning Azure infrastructure..." -ForegroundColor Blue
 azd provision --no-prompt
 
-Write-Host "� Getting ACR name from azd environment..." -ForegroundColor Blue
-$acrName = $(azd env get-values | Select-String "AZURE_CONTAINER_REGISTRY_NAME" | ForEach-Object { $_.ToString().Split('=')[1].Trim('"') })
-if ([string]::IsNullOrWhiteSpace($acrName)) {
-    Write-Error "Failed to get ACR name from azd environment"
-    exit 1
+# Run post-provision script to ensure proper role assignments
+Write-Host "🔑 Running post-provision script to assign AI Foundry roles..." -ForegroundColor Blue
+& "$PSScriptRoot\scripts\post-provision.ps1"
+
+$services = @("orchestrator", "session-manager", "frontend")
+$maxRetries = 3
+$retryDelaySeconds = 30
+
+foreach ($service in $services) {
+    for ($i = 1; $i -le $maxRetries; $i++) {
+        Write-Host "🔨 Deploying service '$service' (Attempt $i of $maxRetries)..." -ForegroundColor Blue
+        
+        # Run the command and check its exit code
+        azd deploy $service --no-prompt
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Successfully deployed service '$service'." -ForegroundColor Green
+            break # Success, exit retry loop
+        }
+
+        Write-Warning "⚠️  Deployment of service '$service' failed on attempt $i."
+        if ($i -lt $maxRetries) {
+            Write-Host "   Waiting for $retryDelaySeconds seconds before retrying..."
+            Start-Sleep -Seconds $retryDelaySeconds
+        } else {
+            Write-Error "❌ Failed to deploy service '$service' after $maxRetries attempts. Aborting."
+            exit 1
+        }
+    }
 }
 
-Write-Host "🐳 Building and pushing Docker images to ACR: $acrName..." -ForegroundColor Blue
-$sessionManagerImage = "$($env:AZURE_ENV_NAME)-session-manager"
-$orchestratorImage = "$($env:AZURE_ENV_NAME)-orchestrator"
-./scripts/build-and-push-images.ps1 -AcrName $acrName -SessionManagerImageName $sessionManagerImage -OrchestratorImageName $orchestratorImage
-
-Write-Host "🔨 Deploying applications with container images..." -ForegroundColor Blue
-azd deploy --no-prompt
-
-Write-Host "✅ Deployment completed successfully!" -ForegroundColor Green
+Write-Host "✅ All services deployed successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "🔗 Your application URLs:" -ForegroundColor Cyan
 azd show --output table

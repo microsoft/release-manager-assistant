@@ -23,9 +23,6 @@
     "azureDevOpsExtPat": {
       "value": "${AZURE_DEVOPS_EXT_PAT=}"
     },
-    "azureAiFoundryResourceId": {
-      "value": "${AZURE_AI_FOUNDRY_RESOURCE_ID=}"
-    },
     "azureAiFoundryResourceName": {
       "value": "${AZURE_AI_FOUNDRY_RESOURCE_NAME=}"
     },

@@ -55,6 +55,7 @@ class DefaultConfig:
                 cls.JIRA_SERVER_PASSWORD = config_reader.read_config_value(Config.JIRA_SERVER_PASSWORD)
 
                 cls.AZURE_DEVOPS_ORG_NAME = config_reader.read_config_value(Config.AZURE_DEVOPS_ORG_NAME)
+                cls.AZURE_DEVOPS_EXT_PAT = config_reader.read_config_value(Config.AZURE_DEVOPS_EXT_PAT)
 
                 cls.AZURE_AI_PROJECT_ENDPOINT = config_reader.read_config_value(Config.AZURE_AI_PROJECT_ENDPOINT)
                 cls.AZURE_AI_MODEL_DEPLOYMENT_NAME = config_reader.read_config_value(Config.AZURE_AI_MODEL_DEPLOYMENT_NAME)

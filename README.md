@@ -15,10 +15,12 @@
 <br/>
 
 <h2>
-🚀 Solution overview
+SOLUTION OVERVIEW
 </h2>
 
 In modern software development, **Release Managers** play a pivotal role bridging the gap between development and operations. As the orchestrators of software deployment, they ensure that releases are timely, efficient, and risk-mitigated. However, increasing complexity and fragmentation across systems have made this role more challenging than ever.
+
+The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
 The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
@@ -38,14 +40,10 @@ The architecture is built on a modular and secure AI-native design leveraging:
 - **Azure Key Vault & Azure Storage**: Secure secret and data management with encrypted credential storage
 - **Redis Integration**: Session management and message queuing for scalable operations
 
-This diagram provides a visual representation of how the **JIRA Agent**, **Azure DevOps Agent**, **Visualization Agent** and **Notification Agent** collaborate to streamline release planning and execution for a release manager.
-
 ![RMA Solution Architecture](./docs/ReleaseManagerAssistant_Architecture.png)
 
----
-
 <h2>
-🛠️ Quick Deploy
+QUICK DEPLOY
 </h2>
 
 > **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.
@@ -72,7 +70,7 @@ For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIO
 ---
 
 <h2>
-Business Scenario
+BUSINESS SCENARIO
 </h2>
 
 ### 🧩 Key Challenges
@@ -113,7 +111,7 @@ Business Scenario
 ---
 
 <h2>
-Supporting Documentation
+SUPPORTING DOCUMENTATION
 </h2>
 
 ### 🔗 Integrations Supported

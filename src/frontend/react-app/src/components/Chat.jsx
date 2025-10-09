@@ -10,19 +10,51 @@ const Chat = () => {
 
   const connectWebSocket = () => {
     const sessionId = generateId()
-    // Use environment variable for Session Manager URL, fallback to localhost for development
-    const sessionManagerUrl = import.meta.env.VITE_SESSION_MANAGER_URL || 'http://127.0.0.1:5000'
-    console.log('VITE_SESSION_MANAGER_URL:', import.meta.env.VITE_SESSION_MANAGER_URL)
-    console.log('Using Session Manager URL:', sessionManagerUrl)
     
-    // Convert HTTP/HTTPS to WS/WSS for WebSocket connections
+    // Get the Session Manager URL from the environment variable
+    const sessionManagerUrl = import.meta.env.VITE_SESSION_MANAGER_URL
+    
+    // Log what we received from the environment
+    console.log('VITE_SESSION_MANAGER_URL from environment:', sessionManagerUrl)
+    
+    // Check if we have a valid URL
+    if (!sessionManagerUrl) {
+      // Handle missing environment variable
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        // In production - display error message
+        console.error('VITE_SESSION_MANAGER_URL environment variable is not set. WebSocket connection will fail.')
+        addMessage({
+          id: generateId(),
+          text: 'Configuration Error: Session Manager URL is not set. Please contact the administrator.',
+          sender: 'bot',
+          isFinal: true
+        })
+        return { readyState: WebSocket.CLOSED } // Return a mock closed WebSocket to prevent further connection attempts
+      } else {
+        // Only in local development, fall back to default port
+        const localUrl = window.location.protocol + '//' + window.location.hostname + ':5000'
+        console.warn('Using local development fallback URL:', localUrl)
+        
+        // Convert HTTP to WS protocol for local development
+        const wsUrl = localUrl.replace('http:', 'ws:').replace('https:', 'wss:')
+        const fullWsUrl = `${wsUrl}/api/query?session_id=${sessionId}`
+        console.log('Connecting to WebSocket (local dev):', fullWsUrl)
+        return new WebSocket(fullWsUrl)
+      }
+    }
+    
+    // For a valid URL, convert HTTP/HTTPS to WS/WSS for WebSocket connections
     let wsUrl
     if (sessionManagerUrl.startsWith('https://')) {
       wsUrl = sessionManagerUrl.replace('https://', 'wss://')
     } else if (sessionManagerUrl.startsWith('http://')) {
       wsUrl = sessionManagerUrl.replace('http://', 'ws://')
-    } else {
+    } else if (sessionManagerUrl.startsWith('ws://') || sessionManagerUrl.startsWith('wss://')) {
+      // URL is already in WebSocket format
       wsUrl = sessionManagerUrl
+    } else {
+      // If URL doesn't have a protocol, assume it needs http:// and convert to ws://
+      wsUrl = 'ws://' + sessionManagerUrl
     }
     
     const fullWsUrl = `${wsUrl}/api/query?session_id=${sessionId}`
@@ -131,7 +163,7 @@ const Chat = () => {
       
       addMessage({
         id: generateId(),
-        text: 'WebSocket error occurred. Check if the session manager is running on port 5000.',
+        text: 'WebSocket error occurred. Please check if the session manager service is running and accessible.',
         sender: 'bot',
         isFinal: true
       })

@@ -19,6 +19,20 @@
   </style>
 </head>
 <body class="bg-gray-100 h-screen flex flex-col">
+  <script>
+    // Define the session manager URL from environment variables
+    window.SESSION_MANAGER_URL = 'wss://ca-session-manager-67wx2zypibjhk.wittysky-76e37be7.eastus2.azurecontainerapps.io';
+    
+    // This placeholder MUST be replaced during deployment
+    if (!window.SESSION_MANAGER_URL || window.SESSION_MANAGER_URL === 'wss://ca-session-manager-67wx2zypibjhk.wittysky-76e37be7.eastus2.azurecontainerapps.io') {
+      console.warn('SESSION_MANAGER_URL not properly set. WebSocket connection will likely fail.');
+      // Only for local development testing
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        window.SESSION_MANAGER_URL = 'ws://' + window.location.hostname + ':5000';
+      }
+    }
+    console.log('Using SESSION_MANAGER_URL:', window.SESSION_MANAGER_URL);
+  </script>
 
   <header class="bg-gray-800 text-white text-xl font-semibold py-4 text-center shadow-md">
     Release Manager Assistant
@@ -70,7 +84,9 @@
 
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         const sessionId = crypto.randomUUID();
-        socket = new WebSocket(`ws://127.0.0.1:5000/api/query?session_id=${sessionId}`);
+        const wsBaseUrl = window.SESSION_MANAGER_URL;
+        socket = new WebSocket(`${wsBaseUrl}/api/query?session_id=${sessionId}`);
+        console.log('Connecting to WebSocket:', `${wsBaseUrl}/api/query?session_id=${sessionId}`);
 
         socket.onopen = () => socket.send(JSON.stringify(message));
         socket.onmessage = event => {
@@ -108,7 +124,7 @@
         };
         socket.onerror = (error) => {
           console.error('WebSocket error:', error);
-          addMessage('WebSocket error occurred. Check if the session manager is running on port 5000.', 'bot');
+          addMessage('WebSocket error occurred. Please check if the session manager service is running.', 'bot');
         };
         socket.onclose = (event) => {
           console.log('WebSocket connection closed:', event.code, event.reason);

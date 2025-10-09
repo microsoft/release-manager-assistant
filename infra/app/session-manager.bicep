@@ -31,9 +31,6 @@ param contentSafetyEndpoint string
 @description('The AI Foundry endpoint')
 param aiFoundryEndpoint string
 
-@description('The resource ID of the AI Foundry account')
-param aiFoundryResourceId string
-
 @description('The Container Registry resource ID')
 param containerRegistryId string
 
@@ -46,6 +43,14 @@ param containerRegistryUsername string = ''
 @description('The Container Registry admin password')
 @secure()
 param containerRegistryPassword string = ''
+
+@description('The Application Insights Connection String')
+@secure()
+param applicationInsightsConnectionString string = ''
+
+@description('The Redis password')
+@secure()
+param redisPassword string = ''
 
 resource sessionManagerApp 'Microsoft.App/containerApps@2023-05-01' = {
   name: name
@@ -79,13 +84,11 @@ resource sessionManagerApp 'Microsoft.App/containerApps@2023-05-01' = {
       secrets: [
         {
           name: 'redis-password'
-          keyVaultUrl: '${keyVaultUri}secrets/redis-password'
-          identity: 'system'
+          value: redisPassword
         }
         {
           name: 'app-insights-connection-string'
-          keyVaultUrl: '${keyVaultUri}secrets/app-insights-connection-string'
-          identity: 'system'
+          value: applicationInsightsConnectionString
         }
         {
           name: 'registry-password'
@@ -99,8 +102,8 @@ resource sessionManagerApp 'Microsoft.App/containerApps@2023-05-01' = {
           name: 'session-manager'
           image: !empty(imageName) ? imageName : 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
           resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
+            cpu: json('2')
+            memory: '4Gi'
           }
           env: [
             {
@@ -202,17 +205,7 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
-// Role assignment for AI Foundry access (Azure AI User)
-resource aiFoundryRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(sessionManagerApp.id, aiFoundryResourceId, 'Azure AI User')
-  scope: resourceGroup()
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d') // Azure AI User
-    principalId: sessionManagerApp.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 output name string = sessionManagerApp.name
 output uri string = 'https://${sessionManagerApp.properties.configuration.ingress.fqdn}'
 output id string = sessionManagerApp.id
+output principalId string = sessionManagerApp.identity.principalId

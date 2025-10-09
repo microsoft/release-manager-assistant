@@ -1,5 +1,5 @@
-name: Template Validation
-on:
+name: Template Validation Workflow
+on: 
   workflow_dispatch:
 
 permissions:
@@ -9,18 +9,20 @@ permissions:
 
 jobs:
   template_validation_job:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     name: template validation
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: microsoft/template-validation-action@Latest
-        id: validation
+      - name: Validate Template
+        uses: microsoft/template-validation-action@Latest
         with:
+          validateAzd: true
           useDevContainer: false
+        id: validation
         env:
-          TEMPLATE_VALIDATION_MODE: true
-          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          #AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
@@ -45,20 +47,11 @@ jobs:
           # JIRA Configuration
           JIRA_SERVER_ENDPOINT: ${{ vars.JIRA_SERVER_ENDPOINT }}
           JIRA_SERVER_USERNAME: ${{ vars.JIRA_SERVER_USERNAME }}
-          JIRA_SERVER_PASSWORD: ${{ vars.JIRA_SERVER_PASSWORD }}
+          JIRA_SERVER_PASSWORD: ${{ secrets.JIRA_SERVER_PASSWORD }}
 
           # Azure DevOps Configuration
-          AZURE_DEVOPS_ORG_NAME: ${{ vars.AZURE_DEVOPS_ORG_NAME }}
-          AZURE_DEVOPS_EXT_PAT: ${{ vars.AZURE_DEVOPS_EXT_PAT }}
-
-          # Container images
-          SESSION_MANAGER_IMAGE_NAME: ${{ vars.SESSION_MANAGER_IMAGE_NAME }}
-          ORCHESTRATOR_IMAGE_NAME: ${{ vars.ORCHESTRATOR_IMAGE_NAME }}
+          AZURE_DEVOPS_ORG_NAME: ${{ secrets.AZURE_DEVOPS_ORG_NAME }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
 
       - name: print result
-        run: |
-          # Change ${{ steps.validation.outputs.resultFile }} to windows path
-          resultFile_win=$(cygpath -w D:/)
-          echo $resultFile_win
-          cat $resultFile_win
-        shell: bash
+        run: cat ${{ steps.validation.outputs.resultFile }}

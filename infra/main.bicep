@@ -15,40 +15,37 @@ param session_manager_image_name string = 'mcr.microsoft.com/azuredocs/container
 @description('The image name for the orchestrator service')
 param orchestrator_image_name string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
-@description('JIRA server endpoint')
-param jiraServerEndpoint string = ''
-
-@secure()
-@description('JIRA server username')
-param jiraServerUsername string = ''
-
-@secure()
-@description('JIRA server password')
-param jiraServerPassword string = ''
-
-@description('Azure DevOps organization name')
-param azureDevOpsOrgName string = ''
-
-@secure()
-@description('Azure DevOps PAT token')
-param azureDevOpsExtPat string = ''
+// Note: These parameters are no longer directly used in bicep
+// They should be handled externally or via environment variables
+// to avoid exposing sensitive values in deployment logs
 
 @secure()
 @description('Redis password for all services')
 param redisPassword string = ''
 
-// BYOAI parameters - Bring Your Own AI resources
-@description('Azure AI Foundry Resource ID - if provided, AI Foundry will not be deployed')
-param azureAiFoundryResourceId string = ''
+@description('Jira server endpoint')
+param jiraServerEndpoint string 
+
+@description('Jira server username')
+@secure()
+param jiraServerUsername string
+
+@description('Jira server password')
+@secure()
+param jiraServerPassword string
+
+@description('Azure DevOps organization name')
+param azureDevOpsOrgName string
+
+@description('Azure DevOps PAT token')
+@secure()
+param azureDevOpsExtPat string
 
 @description('Azure AI Foundry Resource Name - if provided, AI Foundry will not be deployed')
 param azureAiFoundryResourceName string = ''
 
 @description('Azure AI Foundry Project Name - if provided, AI Foundry will not be deployed')
 param azureAiFoundryProjectName string = ''
-
-@description('Azure AI Foundry Model Deployment Name - if provided, AI Foundry will not be deployed')
-param azureAiModelDeploymentName string = ''
 
 @description('Azure OpenAI Endpoint - if provided, AI Foundry OpenAI will not be deployed')
 param azureOpenAIEndpoint string = ''
@@ -63,12 +60,6 @@ param azureOpenAIEmbeddingDeploymentName string = ''
 param azureContentSafetyResourceName string = ''
 
 var actualRedisPassword = redisPassword != '' ? redisPassword : uniqueString(subscription().id, environmentName, 'redis-password')
-
-// Determine if the user is bringing their own AI resources
-var byoaiEnabled = !empty(azureAiFoundryResourceId) && !empty(azureAiFoundryResourceName) && !empty(azureOpenAIEndpoint) && !empty(azureOpenAIResponsesDeploymentName) && !empty(azureOpenAIEmbeddingDeploymentName)
-
-// Determine if the user is bringing their own Content Safety service
-var byoContentSafetyEnabled = !empty(azureContentSafetyResourceName)
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
@@ -125,43 +116,45 @@ module storage './core/storage/storage-account.bicep' = {
   }
 }
 
-// Create Content Safety service if not provided by user
-module contentSafety './core/ai/contentsafety.bicep' = if (!byoContentSafetyEnabled) {
-  name: 'contentsafety'
-  scope: rg
-  params: {
-    location: location
-    tags: tags
-    name: '${abbrs.cognitiveServicesAccounts}${resourceToken}-content-safety'
-  }
-}
+// // Create Content Safety service if not provided by user
+// module contentSafety './core/ai/contentsafety.bicep' = if (!byoContentSafetyEnabled) {
+//   name: 'contentsafety'
+//   scope: rg
+//   params: {
+//     location: location
+//     tags: tags
+//     name: '${abbrs.cognitiveServicesAccounts}${resourceToken}-content-safety'
+//   }
+// }
 
-var azureContentSafetyResourceNameValue = byoContentSafetyEnabled ? azureContentSafetyResourceName : (!empty(contentSafety) ? contentSafety!.outputs.id : '')
+var azureContentSafetyResourceNameValue = azureContentSafetyResourceName
 var azureContentSafetyEndpoint = 'https://${azureContentSafetyResourceNameValue}.cognitiveservices.azure.com/'
 
-// Create Azure AI Foundry with Release Manager Assistant project if not provided by user
-module aiProject './core/ai/ai-project.bicep' = if (!byoaiEnabled) {
-  name: 'aiproject'
-  scope: rg
-  params: {
-    location: location
-    tags: tags
-    // Use dummy names and zero capacity if BYOAI is enabled
-    name: !byoaiEnabled ? '${abbrs.cognitiveServicesAccounts}${resourceToken}-foundry' : ''
-    projectName: !byoaiEnabled ? 'release-manager-assistant' : ''
-    gpt4oCapacity: !byoaiEnabled ? 10 : 0
-  }
-}
+// // Create Azure AI Foundry with Release Manager Assistant project if not provided by user
+// module aiProject './core/ai/ai-project.bicep' = if (!byoaiEnabled) {
+//   name: 'aiproject'
+//   scope: rg
+//   params: {
+//     location: location
+//     tags: tags
+//     // Use dummy names and zero capacity if BYOAI is enabled
+//     name: !byoaiEnabled ? '${abbrs.cognitiveServicesAccounts}${resourceToken}-foundry' : ''
+//     projectName: !byoaiEnabled ? 'release-manager-assistant' : ''
+//     gpt4oCapacity: !byoaiEnabled ? 10 : 0
+//     byoaiEnabled: byoaiEnabled
+//   }
+// }
 
-// Azure AI Foundry Settings - either user provided or generated
-var azureAiFoundryResourceNameValue = byoaiEnabled ? azureAiFoundryResourceName : (!empty(aiProject) ? aiProject.outputs.id : '')
-var azureAiFoundryProjectNameValue = byoaiEnabled ? azureAiFoundryProjectName : (!empty(aiProject) ? aiProject.outputs.projectName : '')
-var azureAiFoundryProjectEndpoint = 'https://${azureAiFoundryResourceNameValue}.services.ai.azure.com/api/projects/${azureAiFoundryProjectNameValue}'
+// // Azure AI Foundry Settings - either user provided or generated
+// var azureAiFoundryResourceNameValue = byoaiEnabled ? azureAiFoundryResourceName : aiProject.outputs.id
+// var azureAiFoundryProjectNameValue = byoaiEnabled ? azureAiFoundryProjectName : aiProject.outputs.projectName
+// var azureAiFoundryProjectEndpoint = 'https://${azureAiFoundryResourceNameValue}.services.ai.azure.com/api/projects/${azureAiFoundryProjectNameValue}'
+var azureAiFoundryProjectEndpoint = 'https://${azureAiFoundryResourceName}.services.ai.azure.com/api/projects/${azureAiFoundryProjectName}'
 
-// Azure OpenAI Settings - either user provided or generated
-var azureOpenAIEndpointValue = byoaiEnabled ? azureOpenAIEndpoint : (!empty(aiProject) ? aiProject.outputs.openaiEndpoint : '')
-var azureOpenAIResponsesDeploymentNameValue = byoaiEnabled ? azureOpenAIResponsesDeploymentName : (!empty(aiProject) ? aiProject.outputs.responseApiDeploymentName : '')
-var azureOpenAIEmbeddingDeploymentNameValue = byoaiEnabled ? azureOpenAIEmbeddingDeploymentName : (!empty(aiProject) ? aiProject.outputs.embeddingDeploymentName : '')
+// // Azure OpenAI Settings - either user provided or generated
+// var azureOpenAIEndpointValue = byoaiEnabled ? azureOpenAIEndpoint : aiProject.outputs.openaiEndpoint
+// var azureOpenAIResponsesDeploymentNameValue = byoaiEnabled ? azureOpenAIResponsesDeploymentName : aiProject.outputs.responseApiDeploymentName
+// var azureOpenAIEmbeddingDeploymentNameValue = byoaiEnabled ? azureOpenAIEmbeddingDeploymentName : aiProject.outputs.embeddingDeploymentName
 
 // Create Container Registry for storing container images
 module containerRegistry './core/host/container-registry.bicep' = {
@@ -218,12 +211,10 @@ module sessionManager './app/session-manager.bicep' = {
     redisHost: redis.outputs.hostName
     redisPort: redis.outputs.port
     contentSafetyEndpoint: azureContentSafetyEndpoint
-    aiFoundryResourceId: byoaiEnabled ? azureAiFoundryResourceId : aiProject!.outputs.id
     aiFoundryEndpoint: azureAiFoundryProjectEndpoint
+    applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
+    redisPassword: actualRedisPassword
   }
-  dependsOn: [
-    secrets
-  ]
 }
 
 // Deploy Orchestrator service
@@ -238,23 +229,27 @@ module orchestrator './app/orchestrator.bicep' = {
     containerAppsEnvironmentId: containerAppsEnvironment.outputs.environmentId
     containerRegistryId: containerRegistry.outputs.resourceId
     containerRegistryLoginServer: containerRegistry.outputs.loginServer
-    containerRegistryUsername: containerRegistry.outputs.adminUsername
-    containerRegistryPassword: containerRegistry.outputs.adminPassword
     keyVaultName: keyVault.outputs.name
     keyVaultUri: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/'
     redisHost: redis.outputs.hostName
     redisPort: redis.outputs.port
+    redisPassword: actualRedisPassword
     storageAccountName: storage.outputs.name
     aiFoundryEndpoint: azureAiFoundryProjectEndpoint
-    aiFoundryResourceId: byoaiEnabled ? azureAiFoundryResourceId : aiProject!.outputs.id
-    aiModelDeploymentName: azureOpenAIResponsesDeploymentNameValue
-    openaiEndpoint: azureOpenAIEndpointValue
-    openaiResponsesDeploymentName: azureOpenAIResponsesDeploymentNameValue
-    openaiEmbeddingDeploymentName: azureOpenAIEmbeddingDeploymentNameValue
+    aiModelDeploymentName: azureOpenAIResponsesDeploymentName
+    openaiEndpoint: azureOpenAIEndpoint
+    openaiResponsesDeploymentName: azureOpenAIResponsesDeploymentName
+    openaiEmbeddingDeploymentName: azureOpenAIEmbeddingDeploymentName
+    applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
+    jiraServerEndpoint: jiraServerEndpoint
+    jiraServerUsername: jiraServerUsername
+    jiraServerPassword: jiraServerPassword
+    azureDevOpsOrgName: azureDevOpsOrgName
+    azureDevOpsExtPat: azureDevOpsExtPat
+    storageAccountKey: storage.outputs.primaryKey
   }
   dependsOn: [
     sessionManager
-    secrets
   ]
 }
 
@@ -271,65 +266,6 @@ module staticWebApp './app/frontend.bicep' = {
   dependsOn: [
     orchestrator
   ]
-}
-
-// Store secrets in Key Vault
-module secrets './core/security/keyvault-secrets.bicep' = {
-  name: 'secrets'
-  scope: rg
-  params: {
-    keyVaultName: keyVault.outputs.name
-    secrets: [
-      {
-        name: 'jira-server-endpoint'
-        value: jiraServerEndpoint
-      }
-      {
-        name: 'jira-server-username'
-        value: jiraServerUsername
-      }
-      {
-        name: 'jira-server-password'
-        value: jiraServerPassword
-      }
-      {
-        name: 'azure-devops-org-name'
-        value: azureDevOpsOrgName
-      }
-      {
-        name: 'azure-devops-ext-pat'
-        value: azureDevOpsExtPat
-      }
-      {
-        name: 'redis-password'
-        value: actualRedisPassword
-      }
-      {
-        name: 'storage-account-key'
-        value: storage.outputs.primaryKey
-      }
-      {
-        name: 'azure-ai-project-endpoint'
-        value: azureAiFoundryProjectEndpoint
-      }
-      {
-        name: 'azure-openai-endpoint'
-        value: azureOpenAIEndpointValue
-      }
-      {
-        name: 'azure-openai-responses-deployment-name'
-        value: azureOpenAIResponsesDeploymentNameValue
-      }
-      {
-        name: 'azure-openai-embedding-deployment-name'
-        value: azureOpenAIEmbeddingDeploymentNameValue
-      }
-      {
-        name: 'app-insights-connection-string'
-        value: monitoring.outputs.applicationInsightsConnectionString
-      }
-    ]
-  }
 }
 
 // Outputs
@@ -349,9 +285,9 @@ output AZURE_STORAGE_ACCOUNT_NAME string = storage.outputs.name
 
 output AZURE_CONTENT_SAFETY_ENDPOINT string = azureContentSafetyEndpoint
 output AZURE_AI_PROJECT_ENDPOINT string = azureAiFoundryProjectEndpoint
-output AZURE_OPENAI_ENDPOINT string = azureOpenAIEndpointValue
-output AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME string = azureOpenAIResponsesDeploymentNameValue
-output AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME string = azureOpenAIEmbeddingDeploymentNameValue
+output AZURE_OPENAI_ENDPOINT string = azureOpenAIEndpoint
+output AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME string = azureOpenAIResponsesDeploymentName
+output AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME string = azureOpenAIEmbeddingDeploymentName
 
 output SESSION_MANAGER_URL string = sessionManager.outputs.uri
 output ORCHESTRATOR_URL string = orchestrator.outputs.uri

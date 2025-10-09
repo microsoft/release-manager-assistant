@@ -71,7 +71,18 @@ npm run preview
 
 ## Backend Communication
 
-The application communicates with the Release Manager Assistant backend via WebSocket connection to `ws://127.0.0.1:5000/api/query`. Make sure the backend server is running on port 5000 before using the application.
+The application communicates with the Release Manager Assistant backend via WebSocket connection. The backend URL is configured through the environment variable `VITE_SESSION_MANAGER_URL`.
+
+### Configuration
+
+- In development: Set the `VITE_SESSION_MANAGER_URL` environment variable or it will use the current hostname with port 5000
+- In production: The URL is automatically configured during deployment
+
+You can set the environment variable in a `.env` file:
+
+```
+VITE_SESSION_MANAGER_URL=http://your-session-manager-url
+```
 
 ## License
 

@@ -1,0 +1,142 @@
+# Post Provisioning Script for Release Manager
+# Assigns Azure AI User role to Session Manager and Orchestrator managed identities
+
+Write-Host "Starting post-provision role assignment..."
+
+# Get resource group name from azd environment
+$ResourceGroup = $(azd env get-values | Select-String "AZURE_RESOURCE_GROUP_NAME" | ForEach-Object { $_.ToString().Split('=')[1].Trim('"') })
+if (-not $ResourceGroup) {
+    Write-Error "AZURE_RESOURCE_GROUP_NAME is not set in the environment."
+    exit 1
+}
+
+# Output all environment values for debugging
+Write-Host "Checking all azd environment values..." -ForegroundColor Cyan
+$allEnvValues = azd env get-values
+
+# Try to get AI Foundry values from azd environment with better error handling
+Write-Host "Attempting to extract AI Foundry values..." -ForegroundColor Cyan
+$AiFoundryResourceGroup = $null
+$foundryRgMatch = $allEnvValues | Select-String "AZURE_AI_FOUNDRY_RESOURCE_GROUP"
+if ($foundryRgMatch) {
+    Write-Host "Found match for AZURE_AI_FOUNDRY_RESOURCE_GROUP: $foundryRgMatch" -ForegroundColor Green
+    try {
+        $AiFoundryResourceGroup = $foundryRgMatch.ToString().Split('=')[1].Trim('"')
+        Write-Host "Extracted value: $AiFoundryResourceGroup" -ForegroundColor Green
+    } catch {
+        Write-Host "Error parsing AZURE_AI_FOUNDRY_RESOURCE_GROUP value: $_" -ForegroundColor Red
+    }
+} else {
+    Write-Host "AZURE_AI_FOUNDRY_RESOURCE_GROUP not found in environment" -ForegroundColor Yellow
+}
+
+$AiFoundryResourceName = $null
+$foundryNameMatch = $allEnvValues | Select-String "AZURE_AI_FOUNDRY_RESOURCE_NAME"
+if ($foundryNameMatch) {
+    Write-Host "Found match for AZURE_AI_FOUNDRY_RESOURCE_NAME: $foundryNameMatch" -ForegroundColor Green
+    try {
+        $AiFoundryResourceName = $foundryNameMatch.ToString().Split('=')[1].Trim('"')
+        Write-Host "Extracted value: $AiFoundryResourceName" -ForegroundColor Green
+    } catch {
+        Write-Host "Error parsing AZURE_AI_FOUNDRY_RESOURCE_NAME value: $_" -ForegroundColor Red
+    }
+} else {
+    Write-Host "AZURE_AI_FOUNDRY_RESOURCE_NAME not found in environment" -ForegroundColor Yellow
+}
+
+$AiFoundryProjectName = $null
+$foundryProjectMatch = $allEnvValues | Select-String "AZURE_AI_FOUNDRY_PROJECT_NAME"
+if ($foundryProjectMatch) {
+    Write-Host "Found match for AZURE_AI_FOUNDRY_PROJECT_NAME: $foundryProjectMatch" -ForegroundColor Green
+    try {
+        $AiFoundryProjectName = $foundryProjectMatch.ToString().Split('=')[1].Trim('"')
+        Write-Host "Extracted value: $AiFoundryProjectName" -ForegroundColor Green
+    } catch {
+        Write-Host "Error parsing AZURE_AI_FOUNDRY_PROJECT_NAME value: $_" -ForegroundColor Red
+    }
+} else {
+    Write-Host "AZURE_AI_FOUNDRY_PROJECT_NAME not found in environment" -ForegroundColor Yellow
+}
+
+# Get container apps from the resource group for later role assignments
+Write-Host "Getting container apps from resource group $ResourceGroup..."
+$containerApps = az containerapp list --resource-group $ResourceGroup --query "[].{name:name, id:id}" -o json | ConvertFrom-Json
+
+if (-not $containerApps -or $containerApps.Count -eq 0) {
+    Write-Error "No container apps found in resource group $ResourceGroup."
+    exit 1
+}
+
+# Check if values are available, provide guidance if not
+$aiFoundryConfigured = $true
+if (-not $AiFoundryResourceGroup -or -not $AiFoundryResourceName) {
+    Write-Host "AI Foundry resource information not found in environment." -ForegroundColor Yellow
+    Write-Host "To configure AI Foundry integration, set these environment variables:" -ForegroundColor Yellow
+    Write-Host "  azd env set AZURE_AI_FOUNDRY_RESOURCE_GROUP <your-resource-group>" -ForegroundColor Cyan
+    Write-Host "  azd env set AZURE_AI_FOUNDRY_RESOURCE_NAME <your-resource-name>" -ForegroundColor Cyan
+    Write-Host "  azd env set AZURE_AI_FOUNDRY_PROJECT_NAME <your-project-name>" -ForegroundColor Cyan
+    
+    Write-Host "Alternatively, set these variables in your .env file and re-run azd up" -ForegroundColor Cyan
+    $aiFoundryConfigured = $false
+}
+
+Write-Host "Resource Group: $ResourceGroup"
+
+# Only proceed with AI Foundry operations if the variables are configured
+if ($aiFoundryConfigured) {
+    Write-Host "AI Foundry Resource Group: $AiFoundryResourceGroup"
+    Write-Host "AI Foundry Resource Name: $AiFoundryResourceName"
+    Write-Host "AI Foundry Project Name: $AiFoundryProjectName"
+
+    # Get the Azure AI resource ID
+    Write-Host "Getting Azure AI resource ID..." -ForegroundColor Cyan
+    $aiFoundryResourceId = az cognitiveservices account show --name $AiFoundryResourceName --resource-group $AiFoundryResourceGroup --query "id" -o tsv
+    if (-not $aiFoundryResourceId) {
+        Write-Error "Failed to find AI Foundry resource with name $AiFoundryResourceName in resource group $AiFoundryResourceGroup."
+        exit 1
+    }
+
+    Write-Host "AI Foundry Resource ID: $aiFoundryResourceId"
+} else {
+    Write-Host "Skipping AI Foundry role assignments as AI Foundry is not configured." -ForegroundColor Yellow
+    exit 0
+}
+
+# Azure AI User role definition ID
+$azureAiUserRoleDefinitionId = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
+
+# Process each container app for AI Foundry role assignments
+foreach ($app in $containerApps) {
+    # Check if this is the session manager or orchestrator
+    if ($app.name -like "*session-manager*" -or $app.name -like "*orchestrator*") {
+        Write-Host "Processing container app: $($app.name)"
+
+        # Get the principal ID of the managed identity
+        $principalId = az containerapp show --name $app.name --resource-group $ResourceGroup --query "identity.principalId" -o tsv
+        if (-not $principalId) {
+            Write-Warning "Container app $($app.name) does not have a managed identity."
+            continue
+        }
+
+        Write-Host "Container App: $($app.name), Principal ID: $principalId"
+
+        # Create a unique name for the role assignment
+        $roleAssignmentName = (New-Guid).Guid
+
+        # Assign the Azure AI User role
+        Write-Host "Assigning Azure AI User role to $($app.name)..."
+        az role assignment create `
+            --assignee-object-id $principalId `
+            --role $azureAiUserRoleDefinitionId `
+            --scope $aiFoundryResourceId `
+            --assignee-principal-type "ServicePrincipal"
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Role assignment created successfully for $($app.name)" -ForegroundColor Green
+        } else {
+            Write-Error "Failed to create role assignment for $($app.name)"
+        }
+    }
+}
+
+Write-Host "Post-provision role assignment completed." -ForegroundColor Green

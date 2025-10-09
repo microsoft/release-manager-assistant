@@ -207,7 +207,23 @@ release_manager/
 
 ## 🚀 Running the Service
 
-### Option 1: Docker Deployment (Recommended)
+### Option 1: Azure Deployment (Recommended for Production)
+
+**Deploy to Azure using the deploy.ps1 script:**
+
+1. **Run the Deployment Script**:
+   ```powershell
+   ./deploy.ps1
+   ```
+   This script will:
+   - Create necessary Azure resources
+   - Deploy container images
+   - Configure environment variables and secrets
+   - Set up networking and security
+
+   For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Option 2: Docker Deployment (Recommended for Development)
 
 **Streamlined container-based deployment with pre-configured services:**
 
@@ -234,7 +250,7 @@ For the best production-ready experience, use Docker execution with VS Code task
 
 For detailed Docker execution guide: [Docker Execution Documentation](../../DOCKER.README.md)
 
-### Option 2: Local Development Setup (Advanced)
+### Option 3: Local Development Setup (Advanced)
 
 **Full debugging capabilities with VS Code integration:**
 
@@ -264,7 +280,7 @@ For detailed Docker execution guide: [Docker Execution Documentation](../../DOCK
    - Launches main service with debugging enabled
    - Configures telemetry and monitoring
 
-### Option 3: Manual Setup (Development/Troubleshooting)
+### Option 4: Manual Setup (Development/Troubleshooting)
 
 **Step-by-step manual configuration:**
 

@@ -9,40 +9,40 @@
       "value": "${AZURE_LOCATION}"
     },
     "jiraServerEndpoint": {
-      "value": "${JIRA_SERVER_ENDPOINT=}"
+      "value": "${JIRA_SERVER_ENDPOINT}"
     },
     "jiraServerUsername": {
-      "value": "${JIRA_SERVER_USERNAME=}"
+      "value": "${JIRA_SERVER_USERNAME}"
     },
     "jiraServerPassword": {
-      "value": "${JIRA_SERVER_PASSWORD=}"
+      "value": "${JIRA_SERVER_PASSWORD}"
     },
     "azureDevOpsOrgName": {
-      "value": "${AZURE_DEVOPS_ORG_NAME=}"
+      "value": "${AZURE_DEVOPS_ORG_NAME}"
     },
     "azureDevOpsExtPat": {
-      "value": "${AZURE_DEVOPS_EXT_PAT=}"
+      "value": "${AZURE_DEVOPS_EXT_PAT}"
     },
     "azureAiFoundryResourceName": {
-      "value": "${AZURE_AI_FOUNDRY_RESOURCE_NAME=}"
+      "value": "${AZURE_AI_FOUNDRY_RESOURCE_NAME}"
     },
     "azureAiFoundryProjectName": {
-      "value": "${AZURE_AI_FOUNDRY_PROJECT_NAME=}"
+      "value": "${AZURE_AI_FOUNDRY_PROJECT_NAME}"
     },
     "azureAiModelDeploymentName": {
-      "value": "${AZURE_AI_MODEL_DEPLOYMENT_NAME=}"
+      "value": "${AZURE_AI_MODEL_DEPLOYMENT_NAME}"
     },
     "azureOpenAIEndpoint": {
-      "value": "${AZURE_OPENAI_ENDPOINT=}"
+      "value": "${AZURE_OPENAI_ENDPOINT}"
     },
     "azureOpenAIResponsesDeploymentName": {
-      "value": "${AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME=}"
+      "value": "${AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME}"
     },
     "azureOpenAIEmbeddingDeploymentName": {
-      "value": "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME=}"
+      "value": "${AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}"
     },
     "azureContentSafetyResourceName": {
-      "value": "${AZURE_CONTENT_SAFETY_RESOURCE_NAME=}"
+      "value": "${AZURE_CONTENT_SAFETY_RESOURCE_NAME}"
     }
   }
 }

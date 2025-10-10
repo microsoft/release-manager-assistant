@@ -38,6 +38,13 @@ param containerRegistryId string
 @description('The Container Registry login server')
 param containerRegistryLoginServer string
 
+@description('The Container Registry admin username')
+param containerRegistryUsername string = ''
+
+@description('The Container Registry admin password')
+@secure()
+param containerRegistryPassword string = ''
+
 @description('The AI Foundry endpoint')
 param aiFoundryEndpoint string
 
@@ -99,7 +106,13 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
         external: true
         targetPort: 5002
       }
-      registries: [
+      registries: !empty(containerRegistryUsername) && !empty(containerRegistryPassword) ? [
+        {
+          server: containerRegistryLoginServer
+          username: containerRegistryUsername
+          passwordSecretRef: 'registry-password'
+        }
+      ] : [
         {
           server: containerRegistryLoginServer
           identity: 'system'
@@ -109,6 +122,10 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
         {
           name: 'app-insights-connection-string'
           value: applicationInsightsConnectionString
+        }
+        {
+          name: 'registry-password'
+          value: containerRegistryPassword
         }
         {
           name: 'redis-password'

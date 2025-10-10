@@ -75,7 +75,7 @@ if (-not $AiFoundryResourceGroup -or -not $AiFoundryResourceName) {
     Write-Host "  azd env set AZURE_AI_FOUNDRY_RESOURCE_GROUP <your-resource-group>" -ForegroundColor Cyan
     Write-Host "  azd env set AZURE_AI_FOUNDRY_RESOURCE_NAME <your-resource-name>" -ForegroundColor Cyan
     Write-Host "  azd env set AZURE_AI_FOUNDRY_PROJECT_NAME <your-project-name>" -ForegroundColor Cyan
-    
+
     Write-Host "Alternatively, set these variables in your .env file and re-run azd up" -ForegroundColor Cyan
     $aiFoundryConfigured = $false
 }
@@ -119,9 +119,6 @@ foreach ($app in $containerApps) {
         }
 
         Write-Host "Container App: $($app.name), Principal ID: $principalId"
-
-        # Create a unique name for the role assignment
-        $roleAssignmentName = (New-Guid).Guid
 
         # Assign the Azure AI User role
         Write-Host "Assigning Azure AI User role to $($app.name)..."

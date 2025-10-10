@@ -23,39 +23,47 @@ param orchestrator_image_name string = 'mcr.microsoft.com/azuredocs/containerapp
 @description('Redis password for all services')
 param redisPassword string = ''
 
+@secure()
 @description('Jira server endpoint')
-param jiraServerEndpoint string 
+param jiraServerEndpoint string = ''
 
+@secure()
 @description('Jira server username')
-@secure()
-param jiraServerUsername string
+param jiraServerUsername string = ''
 
+@secure()
 @description('Jira server password')
-@secure()
-param jiraServerPassword string
+param jiraServerPassword string = ''
 
+@secure()
 @description('Azure DevOps organization name')
-param azureDevOpsOrgName string
+param azureDevOpsOrgName string = ''
 
-@description('Azure DevOps PAT token')
 @secure()
-param azureDevOpsExtPat string
+@description('Azure DevOps PAT token')
+param azureDevOpsExtPat string = ''
 
+@secure()
 @description('Azure AI Foundry Resource Name - if provided, AI Foundry will not be deployed')
 param azureAiFoundryResourceName string = ''
 
+@secure()
 @description('Azure AI Foundry Project Name - if provided, AI Foundry will not be deployed')
 param azureAiFoundryProjectName string = ''
 
+@secure()
 @description('Azure OpenAI Endpoint - if provided, AI Foundry OpenAI will not be deployed')
 param azureOpenAIEndpoint string = ''
 
+@secure()
 @description('Azure OpenAI Responses Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
 param azureOpenAIResponsesDeploymentName string = ''
 
+@secure()
 @description('Azure OpenAI Embedding Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
 param azureOpenAIEmbeddingDeploymentName string = ''
 
+@secure()
 @description('Azure Content Safety Resource Name - if provided, Content Safety service will not be deployed')
 param azureContentSafetyResourceName string = ''
 
@@ -229,6 +237,8 @@ module orchestrator './app/orchestrator.bicep' = {
     containerAppsEnvironmentId: containerAppsEnvironment.outputs.environmentId
     containerRegistryId: containerRegistry.outputs.resourceId
     containerRegistryLoginServer: containerRegistry.outputs.loginServer
+    containerRegistryUsername: containerRegistry.outputs.adminUsername
+    containerRegistryPassword: containerRegistry.outputs.adminPassword
     keyVaultName: keyVault.outputs.name
     keyVaultUri: 'https://${keyVault.outputs.name}${environment().suffixes.keyvaultDns}/'
     redisHost: redis.outputs.hostName
@@ -287,8 +297,12 @@ output AZURE_STORAGE_ACCOUNT_NAME string = storage.outputs.name
 
 output AZURE_CONTENT_SAFETY_ENDPOINT string = azureContentSafetyEndpoint
 output AZURE_AI_PROJECT_ENDPOINT string = azureAiFoundryProjectEndpoint
+
+@secure()
 output AZURE_OPENAI_ENDPOINT string = azureOpenAIEndpoint
+@secure()
 output AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME string = azureOpenAIResponsesDeploymentName
+@secure()
 output AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME string = azureOpenAIEmbeddingDeploymentName
 
 output SESSION_MANAGER_URL string = sessionManager.outputs.uri

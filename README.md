@@ -32,7 +32,7 @@ The architecture is built on a modular and secure AI-native design leveraging:
   - **JIRA Agent**: Handles customer issues with JQL optimization and custom field support
   - **Azure DevOps Agent**: Manages Azure DevOps work items via MCP with comprehensive tool discovery
   - **Visualization Agent**: Creates interactive charts and graphs using code interpreter capabilities
-  - **Planner Agent**: Routes queries intelligently based on user intent and system capabilities  
+  - **Planner Agent**: Routes queries intelligently based on user intent and system capabilities
   - **Fallback Agent**: Provides graceful degradation when services are unavailable
 - **Azure AI Foundry Service**: Cloud-based agents with integrated tools (Code Interpreter, SharePoint)
 - **Microsoft Agent Framework**: Advanced agent orchestration, memory management, and tools integration
@@ -42,9 +42,9 @@ The architecture is built on a modular and secure AI-native design leveraging:
 
 ![RMA Solution Architecture](./docs/ReleaseManagerAssistant_Architecture.png)
 
-<h2>
-GETTING STARTED
-</h2>
+---
+
+## Getting Started
 
 > **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.
 
@@ -64,7 +64,7 @@ For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIO
 ### Quick Start Options
 
 1. **Docker Deployment** (Recommended): Use pre-configured VS Code tasks for containerized deployment
-2. **Local Development**: Full debugging capabilities with VS Code launch configurations  
+2. **Local Development**: Full debugging capabilities with VS Code launch configurations
 3. **Production Setup**: Azure-hosted deployment with proper secret management
 
 ---
@@ -73,7 +73,7 @@ For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIO
 BUSINESS SCENARIO
 </h2>
 
-### 🧩 Key Challenges
+#### 🧩 Key Challenges
 
 - ❌ Fragmented release data across platforms
 - ❌ Lack of real-time release health visibility
@@ -81,8 +81,7 @@ BUSINESS SCENARIO
 - ❌ Difficulty managing cross-team/service dependencies
 - ❌ Visualizing complex data across multiple systems
 
-
-### ✅ Key Features
+## Features
 
 #### 🔄 Release Planning & Coordination
 
@@ -114,7 +113,7 @@ BUSINESS SCENARIO
 SUPPORTING DOCUMENTATION
 </h2>
 
-### 🔗 Integrations Supported
+## Resources
 
 - **[JIRA SDK](https://jira.readthedocs.io/)** - Complete JIRA API integration with custom field support
 - **[JIRA API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)** - Direct REST API access with JQL optimization
@@ -129,8 +128,9 @@ SUPPORTING DOCUMENTATION
 - **[Azure AI Foundry](https://ai.azure.com/doc/azure/ai-foundry/agents/overview)** - Cloud-based agent services with code interpreter capabilities
 - **Redis** - Session management and message queuing for scalable operations
 
+## Guidance
 
-###  🔧 Troubleshooting Guide
+### 🔧 Troubleshooting Guide
 
 Below are solutions for common issues encountered when setting up or running the Release Manager Assistant:
 
@@ -188,12 +188,12 @@ Please refer to [Transparency FAQs](./TRANSPARENCY_FAQ.md) for responsible AI tr
 
 ## Disclaimers
 
-To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, "Microsoft Products and Services"), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services. 
+To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, "Microsoft Products and Services"), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services.
 
 You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting.
 
-You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer's implementation of the Online Services. 
+You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer's implementation of the Online Services.
 
-You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgment of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.  
+You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgment of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.
 
 BY ACCESSING OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT THE SOFTWARE IS NOT DESIGNED OR INTENDED TO SUPPORT ANY USE IN WHICH A SERVICE INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE COULD RESULT IN THE DEATH OR SERIOUS BODILY INJURY OF ANY PERSON OR IN PHYSICAL OR ENVIRONMENTAL DAMAGE (COLLECTIVELY, "HIGH-RISK USE"), AND THAT YOU WILL ENSURE THAT, IN THE EVENT OF ANY INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE, THE SAFETY OF PEOPLE, PROPERTY, AND THE ENVIRONMENT ARE NOT REDUCED BELOW A LEVEL THAT IS REASONABLY, APPROPRIATE, AND LEGAL, WHETHER IN GENERAL OR IN A SPECIFIC INDUSTRY. BY ACCESSING THE SOFTWARE, YOU FURTHER ACKNOWLEDGE THAT YOUR HIGH-RISK USE OF THE SOFTWARE IS AT YOUR OWN RISK.

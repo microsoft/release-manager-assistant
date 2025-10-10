@@ -35,9 +35,10 @@ jobs:
           # Project-specific variables (matches azure-dev.yaml/azure.yaml/main.parameters.json)
           # Release Manager specific variables
           # Azure AI Foundry Settings
-          AZURE_AI_FOUNDRY_RESOURCE_NAME: ${{ secrets.AZURE_AI_FOUNDRY_RESOURCE_NAME }}
-          AZURE_AI_FOUNDRY_PROJECT_NAME: ${{ secrets.AZURE_AI_FOUNDRY_PROJECT_NAME }}
-          AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ secrets.AZURE_AI_MODEL_DEPLOYMENT_NAME }}
+          AZURE_AI_FOUNDRY_RESOURCE_GROUP: ${{ vars.AZURE_AI_FOUNDRY_RESOURCE_GROUP }}
+          AZURE_AI_FOUNDRY_RESOURCE_NAME: ${{ vars.AZURE_AI_FOUNDRY_RESOURCE_NAME }}
+          AZURE_AI_FOUNDRY_PROJECT_NAME: ${{ vars.AZURE_AI_FOUNDRY_PROJECT_NAME }}
+          AZURE_AI_MODEL_DEPLOYMENT_NAME: ${{ vars.AZURE_AI_MODEL_DEPLOYMENT_NAME }}
 
           # Azure OpenAI Settings
           AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}

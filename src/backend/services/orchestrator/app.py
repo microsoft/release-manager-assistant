@@ -123,6 +123,7 @@ async def run_agent_orchestration(request_payload: str, message_handler: RedisMe
                     username=DefaultConfig.JIRA_SERVER_USERNAME,
                     password=DefaultConfig.JIRA_SERVER_PASSWORD,
                     config_file_path=AGENT_CONFIG_FILE_PATH,
+                    use_mcp_server=DefaultConfig.USE_JIRA_MCP_SERVER,
                 ),
                 visualization_settings=VisualizationSettings(
                     storage_account_name=DefaultConfig.STORAGE_ACCOUNT_NAME,

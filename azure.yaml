@@ -14,6 +14,13 @@ metadata:
     - Interactive dashboard for tracking progress
 
 services:
+  mcp-server:
+    project: ./src/backend
+    language: python
+    host: containerapp
+    docker:
+      path: ./mcp_server/Dockerfile
+
   orchestrator:
     project: ./src/backend
     language: python

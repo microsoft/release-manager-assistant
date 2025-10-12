@@ -73,47 +73,35 @@ $allEnvValues = azd env get-values
 
 # Try to get AI Foundry values from azd environment with better error handling
 Write-Host "Attempting to extract AI Foundry values..." -ForegroundColor Cyan
-$AiFoundryResourceGroup = $null
-$foundryRgMatch = $allEnvValues | Select-String "AZURE_AI_FOUNDRY_RESOURCE_GROUP"
-if ($foundryRgMatch) {
-    Write-Host "Found match for AZURE_AI_FOUNDRY_RESOURCE_GROUP: $foundryRgMatch" -ForegroundColor Green
-    try {
-        $AiFoundryResourceGroup = $foundryRgMatch.ToString().Split('=')[1].Trim('"')
-        Write-Host "Extracted value: $AiFoundryResourceGroup" -ForegroundColor Green
-    } catch {
-        Write-Host "Error parsing AZURE_AI_FOUNDRY_RESOURCE_GROUP value: $_" -ForegroundColor Red
+
+# Helper function to extract environment variable values
+function Get-AzdEnvironmentValue {
+    param(
+        [string]$VariableName,
+        [string[]]$AllEnvValues
+    )
+
+    $match = $AllEnvValues | Select-String $VariableName
+    if ($match) {
+        Write-Host "Found match for $VariableName`: $match" -ForegroundColor Green
+        try {
+            $value = $match.ToString().Split('=')[1].Trim('"')
+            Write-Host "Extracted value: $value" -ForegroundColor Green
+            return $value
+        } catch {
+            Write-Host "Error parsing $VariableName value: $_" -ForegroundColor Red
+            return $null
+        }
+    } else {
+        Write-Host "$VariableName not found in environment" -ForegroundColor Yellow
+        return $null
     }
-} else {
-    Write-Host "AZURE_AI_FOUNDRY_RESOURCE_GROUP not found in environment" -ForegroundColor Yellow
 }
 
-$AiFoundryResourceName = $null
-$foundryNameMatch = $allEnvValues | Select-String "AZURE_AI_FOUNDRY_RESOURCE_NAME"
-if ($foundryNameMatch) {
-    Write-Host "Found match for AZURE_AI_FOUNDRY_RESOURCE_NAME: $foundryNameMatch" -ForegroundColor Green
-    try {
-        $AiFoundryResourceName = $foundryNameMatch.ToString().Split('=')[1].Trim('"')
-        Write-Host "Extracted value: $AiFoundryResourceName" -ForegroundColor Green
-    } catch {
-        Write-Host "Error parsing AZURE_AI_FOUNDRY_RESOURCE_NAME value: $_" -ForegroundColor Red
-    }
-} else {
-    Write-Host "AZURE_AI_FOUNDRY_RESOURCE_NAME not found in environment" -ForegroundColor Yellow
-}
-
-$AiFoundryProjectName = $null
-$foundryProjectMatch = $allEnvValues | Select-String "AZURE_AI_FOUNDRY_PROJECT_NAME"
-if ($foundryProjectMatch) {
-    Write-Host "Found match for AZURE_AI_FOUNDRY_PROJECT_NAME: $foundryProjectMatch" -ForegroundColor Green
-    try {
-        $AiFoundryProjectName = $foundryProjectMatch.ToString().Split('=')[1].Trim('"')
-        Write-Host "Extracted value: $AiFoundryProjectName" -ForegroundColor Green
-    } catch {
-        Write-Host "Error parsing AZURE_AI_FOUNDRY_PROJECT_NAME value: $_" -ForegroundColor Red
-    }
-} else {
-    Write-Host "AZURE_AI_FOUNDRY_PROJECT_NAME not found in environment" -ForegroundColor Yellow
-}
+# Extract AI Foundry configuration values
+$AiFoundryResourceGroup = Get-AzdEnvironmentValue -VariableName "AZURE_AI_FOUNDRY_RESOURCE_GROUP" -AllEnvValues $allEnvValues
+$AiFoundryResourceName = Get-AzdEnvironmentValue -VariableName "AZURE_AI_FOUNDRY_RESOURCE_NAME" -AllEnvValues $allEnvValues
+$AiFoundryProjectName = Get-AzdEnvironmentValue -VariableName "AZURE_AI_FOUNDRY_PROJECT_NAME" -AllEnvValues $allEnvValues
 
 # Get container apps from the resource group for later role assignments
 Write-Host "Getting container apps from resource group $ResourceGroup..."

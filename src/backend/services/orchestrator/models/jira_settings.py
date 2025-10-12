@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+from typing import Optional
 from dataclasses import dataclass
 
 
@@ -19,6 +20,7 @@ class JiraSettings:
         config_file_path (str): The file path for the configuration file containing additional metadata.
     """
     server_url: str
-    username: str
-    password: str
-    config_file_path: str
+    username: Optional[str] = None
+    password: Optional[str] = None
+    config_file_path: Optional[str] = None
+    use_mcp_server: bool = False

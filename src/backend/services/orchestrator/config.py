@@ -50,6 +50,7 @@ class DefaultConfig:
                 cls.REDIS_MESSAGE_QUEUE_CHANNEL = config_reader.read_config_value(Config.REDIS_MESSAGE_QUEUE_CHANNEL)
 
                 # JIRA configuration
+                cls.USE_JIRA_MCP_SERVER = str_to_bool(os.getenv(Config.USE_JIRA_MCP_SERVER.value, "false"))
                 cls.JIRA_SERVER_ENDPOINT = config_reader.read_config_value(Config.JIRA_SERVER_ENDPOINT)
                 cls.JIRA_SERVER_USERNAME = config_reader.read_config_value(Config.JIRA_SERVER_USERNAME)
                 cls.JIRA_SERVER_PASSWORD = config_reader.read_config_value(Config.JIRA_SERVER_PASSWORD)

@@ -279,7 +279,6 @@ module orchestrator './app/orchestrator.bicep' = {
     openaiResponsesDeploymentName: azureOpenAIResponsesDeploymentName
     openaiEmbeddingDeploymentName: azureOpenAIEmbeddingDeploymentName
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
-    jiraServerEndpoint: jiraServerEndpoint
     useJiraMcpServer: useJiraMcpServer
     jiraServerEndpoint: useJiraMcpServer ? mcpServer.outputs.mcpEndpoint : jiraServerEndpoint
     jiraServerUsername: jiraServerUsername

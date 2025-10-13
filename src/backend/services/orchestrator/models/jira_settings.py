@@ -19,6 +19,13 @@ class JiraSettings:
         config_file_path (str): The file path for the configuration file containing additional metadata.
     """
     server_url: str
+<<<<<<< Updated upstream
     username: str
     password: str
     config_file_path: str
+=======
+    use_mcp_server: bool
+    username: Optional[str] = None
+    password: Optional[str] = None
+    config_file_path: Optional[str] = None
+>>>>>>> Stashed changes

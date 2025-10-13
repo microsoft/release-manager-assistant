@@ -251,7 +251,12 @@ module orchestrator './app/orchestrator.bicep' = {
     openaiResponsesDeploymentName: azureOpenAIResponsesDeploymentName
     openaiEmbeddingDeploymentName: azureOpenAIEmbeddingDeploymentName
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
+<<<<<<< Updated upstream
     jiraServerEndpoint: jiraServerEndpoint
+=======
+    useJiraMcpServer: useJiraMcpServer
+    jiraServerEndpoint: useJiraMcpServer ? mcpServer.outputs.mcpEndpoint : jiraServerEndpoint
+>>>>>>> Stashed changes
     jiraServerUsername: jiraServerUsername
     jiraServerPassword: jiraServerPassword
     azureDevOpsOrgName: azureDevOpsOrgName
@@ -290,6 +295,7 @@ output AZURE_KEY_VAULT_URI string = keyVault.outputs.uri
 
 output AZURE_APPLICATION_INSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
 
+<<<<<<< Updated upstream
 output REDIS_HOSTNAME string = redis.outputs.hostName
 output REDIS_PORT string = string(redis.outputs.port)
 
@@ -305,6 +311,8 @@ output AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME string = azureOpenAIResponsesDeplo
 @secure()
 output AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME string = azureOpenAIEmbeddingDeploymentName
 
+=======
+>>>>>>> Stashed changes
 output SESSION_MANAGER_URL string = sessionManager.outputs.uri
 output ORCHESTRATOR_URL string = orchestrator.outputs.uri
 output FRONTEND_URL string = staticWebApp.outputs.uri

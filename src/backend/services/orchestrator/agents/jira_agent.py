@@ -45,6 +45,50 @@ class JiraAgent(AgentBase):
         try:
             # Read JIRA instructions and field mapping from static files
             settings = JiraSettings(**kwargs)
+<<<<<<< Updated upstream
+=======
+            tools = await self._get_tools(settings)
+
+            try:
+                agent = client.create_agent(
+                    name=configuration.agent_name,
+                    instructions=configuration.instructions,
+                    tools=tools,
+                )
+
+                self._logger.info(f"Successfully created visualization agent: {configuration.agent_name}")
+                return agent
+            except Exception as e:
+                self._logger.error(f"Failed to create visualization agent: {e}")
+                raise
+        except Exception as ex:
+            self._logger.error(f"Error creating Jira agent: {ex}")
+            return None
+
+    async def _get_tools(self, settings: JiraSettings) -> List[Any] | MCPStreamableHTTPTool:
+        """
+        Create MCP client tools for Jira integration.
+
+        Args:
+            settings: JiraSettings containing MCP server configuration
+
+        Returns:
+            List of MCP tools for the agent
+        """
+        tools = []
+
+        # Determine which tools to use based on settings
+        self._logger.info(f"Jira settings: use_mcp_server={settings.use_mcp_server}, server_url={settings.server_url}")
+        if settings.use_mcp_server:
+            self._logger.info("Using MCP server for Jira integration")
+            return MCPStreamableHTTPTool(
+                name="jira-mcp-server",
+                description="Jira MCP server to create, update and search Jira Issues.",
+                url=settings.server_url
+            )
+        else:
+            self._logger.info("Using traditional Jira plugin for integration")
+>>>>>>> Stashed changes
 
             config_path = Path(settings.config_file_path)
 
@@ -83,6 +127,7 @@ class JiraAgent(AgentBase):
                     ],
                 )
 
+<<<<<<< Updated upstream
                 self._logger.info(f"Successfully created visualization agent: {configuration.agent_name}")
                 return agent
             except Exception as e:
@@ -91,3 +136,6 @@ class JiraAgent(AgentBase):
         except Exception as ex:
             self._logger.error(f"Error creating Jira agent: {ex}")
             return None
+=======
+            return tools
+>>>>>>> Stashed changes

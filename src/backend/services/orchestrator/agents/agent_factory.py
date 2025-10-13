@@ -180,7 +180,8 @@ class ReleaseManagerAgentFactory:
                 server_url=context.jira_settings.server_url,
                 username=context.jira_settings.username,
                 password=context.jira_settings.password,
-                config_file_path=context.jira_settings.config_file_path
+                config_file_path=context.jira_settings.config_file_path,
+                use_mcp_server=context.jira_settings.use_mcp_server
             )
 
         self.logger.info("Created new JIRA agent instance")

@@ -50,9 +50,17 @@ class DefaultConfig:
                 cls.REDIS_MESSAGE_QUEUE_CHANNEL = config_reader.read_config_value(Config.REDIS_MESSAGE_QUEUE_CHANNEL)
 
                 # JIRA configuration
+<<<<<<< Updated upstream
+=======
+                cls.USE_JIRA_MCP_SERVER = str_to_bool(os.getenv(Config.USE_JIRA_MCP_SERVER.value, "true"))
+>>>>>>> Stashed changes
                 cls.JIRA_SERVER_ENDPOINT = config_reader.read_config_value(Config.JIRA_SERVER_ENDPOINT)
-                cls.JIRA_SERVER_USERNAME = config_reader.read_config_value(Config.JIRA_SERVER_USERNAME)
-                cls.JIRA_SERVER_PASSWORD = config_reader.read_config_value(Config.JIRA_SERVER_PASSWORD)
+
+                cls.logger.info(f"USE_JIRA_MCP_SERVER: {str(cls.USE_JIRA_MCP_SERVER)}, JIRA_SERVER_ENDPOINT: {cls.JIRA_SERVER_ENDPOINT}")
+
+                # Only read these values if not using the hosted JIRA MCP server
+                cls.JIRA_SERVER_USERNAME = config_reader.read_config_value(Config.JIRA_SERVER_USERNAME) if not cls.USE_JIRA_MCP_SERVER else None
+                cls.JIRA_SERVER_PASSWORD = config_reader.read_config_value(Config.JIRA_SERVER_PASSWORD) if not cls.USE_JIRA_MCP_SERVER else None
 
                 cls.AZURE_DEVOPS_ORG_NAME = config_reader.read_config_value(Config.AZURE_DEVOPS_ORG_NAME)
                 cls.AZURE_DEVOPS_EXT_PAT = config_reader.read_config_value(Config.AZURE_DEVOPS_EXT_PAT)

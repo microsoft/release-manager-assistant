@@ -79,6 +79,9 @@ param jiraServerUsername string = ''
 @secure()
 param jiraServerPassword string = ''
 
+@description('Whether to use the internal Jira MCP server instead of direct Jira connection')
+param useJiraMcpServer bool = false
+
 @description('Azure DevOps organization name')
 @secure()
 param azureDevOpsOrgName string = ''
@@ -118,7 +121,7 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
           identity: 'system'
         }
       ]
-      secrets: [
+      secrets: concat([
         {
           name: 'app-insights-connection-string'
           value: applicationInsightsConnectionString
@@ -144,18 +147,6 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
           value: openaiEmbeddingDeploymentName
         }
         {
-          name: 'jira-server-endpoint'
-          value: jiraServerEndpoint
-        }
-        {
-          name: 'jira-server-username'
-          value: jiraServerUsername
-        }
-        {
-          name: 'jira-server-password'
-          value: jiraServerPassword
-        }
-        {
           name: 'azure-devops-org-name'
           value: azureDevOpsOrgName
         }
@@ -167,7 +158,22 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
           name: 'storage-account-key'
           value: storageAccountKey
         }
-      ]
+      ], !empty(jiraServerEndpoint) ? [
+        {
+          name: 'jira-server-endpoint'
+          value: jiraServerEndpoint
+        }
+      ] : [], !empty(jiraServerUsername) ? [
+        {
+          name: 'jira-server-username'
+          value: jiraServerUsername
+        }
+      ] : [], !empty(jiraServerPassword) ? [
+        {
+          name: 'jira-server-password'
+          value: jiraServerPassword
+        }
+      ] : [])
     }
     template: {
       containers: [
@@ -178,7 +184,7 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
             cpu: json('2')
             memory: '4Gi'
           }
-          env: [
+          env: concat([
             {
               name: 'KEYVAULT-URI'
               value: keyVaultUri
@@ -244,18 +250,6 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
               value: 'visualizations'
             }
             {
-              name: 'JIRA-SERVER-ENDPOINT'
-              value: jiraServerEndpoint
-            }
-            {
-              name: 'JIRA-SERVER-USERNAME'
-              value: jiraServerUsername
-            }
-            {
-              name: 'JIRA-SERVER-PASSWORD'
-              value: jiraServerPassword
-            }
-            {
               name: 'AZURE-DEVOPS-ORG-NAME'
               value: azureDevOpsOrgName
             }
@@ -263,7 +257,26 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
               name: 'AZURE-DEVOPS-EXT-PAT'
               value: azureDevOpsExtPat
             }
-          ]
+            {
+              name: 'USE_JIRA_MCP_SERVER'
+              value: string(useJiraMcpServer)
+            }
+          ], !empty(jiraServerEndpoint) ? [
+            {
+              name: 'JIRA-SERVER-ENDPOINT'
+              value: jiraServerEndpoint
+            }
+          ] : [], !empty(jiraServerUsername) ? [
+            {
+              name: 'JIRA-SERVER-USERNAME'
+              value: jiraServerUsername
+            }
+          ] : [], !empty(jiraServerPassword) ? [
+            {
+              name: 'JIRA-SERVER-PASSWORD'
+              value: jiraServerPassword
+            }
+          ] : [])
         }
       ]
       scale: {

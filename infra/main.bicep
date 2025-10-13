@@ -15,6 +15,12 @@ param session_manager_image_name string = 'mcr.microsoft.com/azuredocs/container
 @description('The image name for the orchestrator service')
 param orchestrator_image_name string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
+@description('The image name for the MCP server service')
+param mcp_server_image_name string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+
+@description('Whether to use the internal Jira MCP server instead of direct Jira connection')
+param useJiraMcpServer bool = false
+
 // Note: These parameters are no longer directly used in bicep
 // They should be handled externally or via environment variables
 // to avoid exposing sensitive values in deployment logs
@@ -24,15 +30,15 @@ param orchestrator_image_name string = 'mcr.microsoft.com/azuredocs/containerapp
 param redisPassword string = ''
 
 @secure()
-@description('Jira server endpoint')
+@description('Jira server endpoint (optional when using MCP server)')
 param jiraServerEndpoint string = ''
 
 @secure()
-@description('Jira server username')
+@description('Jira server username (optional when using MCP server)')
 param jiraServerUsername string = ''
 
 @secure()
-@description('Jira server password')
+@description('Jira server password (optional when using MCP server)')
 param jiraServerPassword string = ''
 
 @secure()
@@ -43,17 +49,21 @@ param azureDevOpsOrgName string = ''
 @description('Azure DevOps PAT token')
 param azureDevOpsExtPat string = ''
 
-@secure()
 @description('Azure AI Foundry Resource Name - if provided, AI Foundry will not be deployed')
 param azureAiFoundryResourceName string = ''
 
-@secure()
+@description('Azure AI Foundry Resource Group - required if using existing AI Foundry resource')
+param azureAiFoundryResourceGroup string = ''
+
 @description('Azure AI Foundry Project Name - if provided, AI Foundry will not be deployed')
 param azureAiFoundryProjectName string = ''
 
 @secure()
 @description('Azure OpenAI Endpoint - if provided, AI Foundry OpenAI will not be deployed')
 param azureOpenAIEndpoint string = ''
+
+@description('Azure AI Model Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
+param azureAiModelDeploymentName string = ''
 
 @secure()
 @description('Azure OpenAI Responses Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
@@ -200,6 +210,24 @@ module redis './app/redis.bicep' = {
   }
 }
 
+// Deploy MCP Server (if enabled)
+module mcpServer './app/mcp-server.bicep' = if (useJiraMcpServer) {
+  name: 'mcp-server'
+  scope: rg
+  params: {
+    name: '${abbrs.appContainerApps}mcp-server-${resourceToken}'
+    location: location
+    tags: union(tags, { 'azd-service-name': 'mcp-server' })
+    imageName: mcp_server_image_name
+    containerAppsEnvironmentId: containerAppsEnvironment.outputs.environmentId
+    containerRegistryId: containerRegistry.outputs.resourceId
+    containerRegistryLoginServer: containerRegistry.outputs.loginServer
+    containerRegistryUsername: containerRegistry.outputs.adminUsername
+    containerRegistryPassword: containerRegistry.outputs.adminPassword
+    applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
+  }
+}
+
 // Deploy Session Manager service
 module sessionManager './app/session-manager.bicep' = {
   name: 'session-manager'
@@ -246,17 +274,14 @@ module orchestrator './app/orchestrator.bicep' = {
     redisPassword: actualRedisPassword
     storageAccountName: storage.outputs.name
     aiFoundryEndpoint: azureAiFoundryProjectEndpoint
-    aiModelDeploymentName: azureOpenAIResponsesDeploymentName
+    aiModelDeploymentName: azureAiModelDeploymentName
     openaiEndpoint: azureOpenAIEndpoint
     openaiResponsesDeploymentName: azureOpenAIResponsesDeploymentName
     openaiEmbeddingDeploymentName: azureOpenAIEmbeddingDeploymentName
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
-<<<<<<< Updated upstream
     jiraServerEndpoint: jiraServerEndpoint
-=======
     useJiraMcpServer: useJiraMcpServer
     jiraServerEndpoint: useJiraMcpServer ? mcpServer.outputs.mcpEndpoint : jiraServerEndpoint
->>>>>>> Stashed changes
     jiraServerUsername: jiraServerUsername
     jiraServerPassword: jiraServerPassword
     azureDevOpsOrgName: azureDevOpsOrgName
@@ -295,27 +320,14 @@ output AZURE_KEY_VAULT_URI string = keyVault.outputs.uri
 
 output AZURE_APPLICATION_INSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
 
-<<<<<<< Updated upstream
-output REDIS_HOSTNAME string = redis.outputs.hostName
-output REDIS_PORT string = string(redis.outputs.port)
-
-output AZURE_STORAGE_ACCOUNT_NAME string = storage.outputs.name
-
-output AZURE_CONTENT_SAFETY_ENDPOINT string = azureContentSafetyEndpoint
-output AZURE_AI_PROJECT_ENDPOINT string = azureAiFoundryProjectEndpoint
-
-@secure()
-output AZURE_OPENAI_ENDPOINT string = azureOpenAIEndpoint
-@secure()
-output AZURE_OPENAI_RESPONSES_DEPLOYMENT_NAME string = azureOpenAIResponsesDeploymentName
-@secure()
-output AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME string = azureOpenAIEmbeddingDeploymentName
-
-=======
->>>>>>> Stashed changes
 output SESSION_MANAGER_URL string = sessionManager.outputs.uri
 output ORCHESTRATOR_URL string = orchestrator.outputs.uri
+output MCP_SERVER_URL string = mcpServer.outputs.mcpEndpoint
 output FRONTEND_URL string = staticWebApp.outputs.uri
 
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
 output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+
+output AZURE_AI_FOUNDRY_RESOURCE_GROUP string = azureAiFoundryResourceGroup
+output AZURE_AI_FOUNDRY_RESOURCE_NAME string = azureAiFoundryResourceName
+output AZURE_AI_FOUNDRY_PROJECT_NAME string = azureAiFoundryProjectName

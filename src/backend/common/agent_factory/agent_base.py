@@ -5,7 +5,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union
 
-from agent_framework import AgentRunResponse, AgentThread, ChatAgent, ChatMessage
+from agent_framework import AgentRunResponse, AgentThread, ChatAgent, ChatMessage, MCPStreamableHTTPTool
 from agent_framework.azure import AzureAIAgentClient, AzureOpenAIResponsesClient
 
 from common.contracts.configuration.agent_config import (
@@ -146,36 +146,58 @@ class AgentBase(ABC):
         Returns:
             The response from the agent.
         """
-        response = await self._agent.run(
-            messages=messages,
-            thread=thread,
-            tools=tools,
-            response_format=response_format,
-            max_tokens=runtime_configuration.max_completion_tokens,
-            model=runtime_configuration.model,
-            temperature=runtime_configuration.temperature,
-            top_p=runtime_configuration.top_p,
-            **kwargs
-        )
+        agent_response: AgentRunResponse = None
+        use_async_context = False
+
+        # Handle tools that require async context management
+        if tools and isinstance(tools, MCPStreamableHTTPTool):
+            use_async_context = True
+
+        if use_async_context:
+            async with tools:
+                agent_response = await self._agent.run(
+                    messages=messages,
+                    thread=thread,
+                    tools=tools,
+                    response_format=response_format,
+                    max_tokens=runtime_configuration.max_completion_tokens,
+                    model=runtime_configuration.model,
+                    temperature=runtime_configuration.temperature,
+                    top_p=runtime_configuration.top_p,
+                    **kwargs
+                )
+        else:
+            # No MCPStreamableHTTPTool, run normally
+            agent_response = await self._agent.run(
+                messages=messages,
+                thread=thread,
+                tools=tools,
+                response_format=response_format,
+                max_tokens=runtime_configuration.max_completion_tokens,
+                model=runtime_configuration.model,
+                temperature=runtime_configuration.temperature,
+                top_p=runtime_configuration.top_p,
+                **kwargs
+            )
 
         # Log agent response with structured format
         # Check if usage details are available
-        if response.usage_details:
+        if agent_response.usage_details:
             usage_info = (
             f"  Usage Details:\n"
-            f"    Input Tokens:  {response.usage_details.input_token_count}\n"
-            f"    Output Tokens: {response.usage_details.output_token_count}\n"
-            f"    Total Tokens:  {response.usage_details.total_token_count}"
+            f"    Input Tokens:  {agent_response.usage_details.input_token_count}\n"
+            f"    Output Tokens: {agent_response.usage_details.output_token_count}\n"
+            f"    Total Tokens:  {agent_response.usage_details.total_token_count}"
             )
         else:
             usage_info = "  Usage Details: Not available"
 
         self._logger.info(
             f"Agent response received:\n"
-            f"  Created At: {response.created_at}\n"
-            f"  Response ID: {response.response_id}\n"
-            f"  Response: {response}\n"
+            f"  Created At: {agent_response.created_at}\n"
+            f"  Response ID: {agent_response.response_id}\n"
+            f"  Response: {agent_response}\n"
             f"{usage_info}"
         )
 
-        return response
+        return agent_response

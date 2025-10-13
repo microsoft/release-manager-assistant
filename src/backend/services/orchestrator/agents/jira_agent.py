@@ -2,8 +2,9 @@
 # Licensed under the MIT license.
 
 from pathlib import Path
+from typing import List, Any
 
-from agent_framework import ChatAgent
+from agent_framework import ChatAgent, MCPStreamableHTTPTool
 from agent_framework.azure import AzureOpenAIResponsesClient
 
 from models.jira_settings import JiraSettings
@@ -45,8 +46,6 @@ class JiraAgent(AgentBase):
         try:
             # Read JIRA instructions and field mapping from static files
             settings = JiraSettings(**kwargs)
-<<<<<<< Updated upstream
-=======
             tools = await self._get_tools(settings)
 
             try:
@@ -75,10 +74,7 @@ class JiraAgent(AgentBase):
         Returns:
             List of MCP tools for the agent
         """
-        tools = []
-
         # Determine which tools to use based on settings
-        self._logger.info(f"Jira settings: use_mcp_server={settings.use_mcp_server}, server_url={settings.server_url}")
         if settings.use_mcp_server:
             self._logger.info("Using MCP server for Jira integration")
             return MCPStreamableHTTPTool(
@@ -88,7 +84,6 @@ class JiraAgent(AgentBase):
             )
         else:
             self._logger.info("Using traditional Jira plugin for integration")
->>>>>>> Stashed changes
 
             config_path = Path(settings.config_file_path)
 
@@ -114,28 +109,11 @@ class JiraAgent(AgentBase):
             )
             await jira_plugin.initialize()
 
-            try:
-                agent = client.create_agent(
-                    name=configuration.agent_name,
-                    instructions=configuration.instructions,
-                    tools=[
-                        JiraPlugin.create_issue, 
-                        JiraPlugin.update_issue, 
-                        JiraPlugin.search_issues,
-                        JiraPlugin.get_jira_field_info,
-                        JiraPlugin.get_jira_jql_instructions,
-                    ],
-                )
+            return [
+                JiraPlugin.create_issue,
+                JiraPlugin.update_issue,
+                JiraPlugin.search_issues,
+                JiraPlugin.get_jira_field_info,
+                JiraPlugin.get_jira_jql_instructions,
+            ]
 
-<<<<<<< Updated upstream
-                self._logger.info(f"Successfully created visualization agent: {configuration.agent_name}")
-                return agent
-            except Exception as e:
-                self._logger.error(f"Failed to create visualization agent: {e}")
-                raise
-        except Exception as ex:
-            self._logger.error(f"Error creating Jira agent: {ex}")
-            return None
-=======
-            return tools
->>>>>>> Stashed changes

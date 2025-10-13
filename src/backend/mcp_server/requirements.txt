@@ -1,0 +1,6 @@
+fastmcp==2.12.4
+python-dotenv>=1.1.0
+pydantic==2.11.7
+pydantic-settings==2.6.1
+python-multipart==0.0.17
+httpx==0.28.1

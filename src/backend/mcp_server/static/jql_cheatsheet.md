@@ -1,189 +1,227 @@
-**JIRA Query Language (JQL) Cheat Sheet**
+# JQL (Jira Query Language) Guide for AI Agents
 
-## Query Structure
-A JQL query consists of:
-- **Field**: The attribute of an issue (e.g., `assignee`, `priority`, `status`).
-- **Operator**: Defines the relationship between the field and value (e.g., `=`, `>`, `in`).
-- **Value/Function**: Specifies the criteria (e.g., `"Open"`, `currentUser()`).
-
-**Example Query:**
+## Basic Query Pattern
 ```
-project = "TEST" AND status = "Open"
+FIELD OPERATOR VALUE
 ```
 
-## Operators
-#### Equality Operators
-- `=` (equals)
-- `!=` (not equal)
+Examples:
+- `status = "Open"`
+- `priority = "High"`
+- `assignee = "john.doe@example.com"`
 
-#### Comparison Operators
-- `>` (greater than)
-- `>=` (greater than or equal to)
-- `<` (less than)
-- `<=` (less than or equal to)
+## Combining Queries
+Use `AND`, `OR`, and parentheses `()` to combine conditions:
+- `status = "Open" AND priority = "High"`
+- `(status = "Open" OR status = "In Progress") AND assignee = "john.doe"`
 
-#### Text Search Operators
-- `~` (contains, used for text fields)
-- `!~` (does not contain)
+## Essential Operators
 
-#### List Operators
-- `in` (matches any value in a list)
-- `not in` (does not match any value in a list)
+### Exact Match
+- `=` equals: `status = "Open"`
+- `!=` not equals: `status != "Closed"`
 
-#### History Operators
-- `was` (was previously in a state)
-- `was not` (was never in a state)
-- `was in` (was previously in any of these states)
-- `was not in` (was never in any of these states)
+### Text Search
+- `~` contains: `summary ~ "bug"`
+- `!~` does not contain: `summary !~ "test"`
 
-#### Change Operators
-- `changed` (used to track changes in fields)
+### Lists
+- `IN` matches any: `status IN ("Open", "In Progress")`
+- `NOT IN` excludes: `priority NOT IN ("Low", "Lowest")`
 
-## Wildcard and Fuzzy Search
-- **Single Character Wildcard:** `?`
-  - Example: `te?t` (matches `text`, `test`, etc.)
-- **Multiple Character Wildcard:** `*`
-  - Example: `win*` (matches `windows`, `winner`, etc.)
-- **Fuzzy Search:** Add `~` to the end of a term
-  - Example: `roam~` (matches similar words like `room`, `roams`)
-- **Proximity Search:** Add `~` and a number to a quoted phrase
-  - Example: `"Atlassian Jira"~10` (words within 10 words of each other)
+### Comparison (for dates/numbers)
+- `>` greater than: `created > "2024-01-01"`
+- `<` less than: `updated < "2024-12-31"`
 
-### Boosting Search Relevance
-Use `^` with a boost factor to prioritize terms.
-- Example: `atlassian^4 jira` (boosts `atlassian` relevance)
+## Common Fields and Values
 
-### Reserved Characters and Words
-#### Reserved Characters
-`& | * / % ^ $ # @ [ ] , ; ? !`
+### Standard Fields
+- `status`: "Open", "In Progress", "Done", "Closed", "Resolved"
+- `priority`: "Highest", "High", "Medium", "Low", "Lowest"
+- `assignee`: email addresses or usernames
+- `creator`: email addresses or usernames
+- `summary`: issue title/description
+- `project`: project key or name
+- `created`: date field
+- `updated`: date field
 
-#### Reserved Words
-`and`, `or`, `not`
+### Issue Types
+- `issuetype`: "Bug", "Story", "Task", "Epic", "Subtask"
 
-**Escape Methods:**
-- Surround with quotes: `text ~ "encoding"`
-- Escape with backslashes: `text ~ "\\specialTerm"`
+## Custom Fields - IMPORTANT for AI Agents
 
-## Common Fields
-- `assignee`
-- `priority`
-- `status`
-- `summary`
-- `labels`
-- `project`
-- `release` (text field - use ~ operator: release ~ "version")
-- `created`
+**⚠️ Critical Rule: When using custom fields, you MUST use the exact field name from the schema, not standard Jira field names.**
 
-## Functions for Dynamic Queries
-#### Date Functions
-- `startOfDay()`, `startOfWeek()`, `startOfMonth()`
-- `endOfDay()`, `endOfWeek()`, `endOfMonth()`
+### How to Handle Custom Fields
 
-#### User Functions
-- `currentUser()`
-- `membersOf("groupName")`
+1. **Always check the schema first** using the `jira_get_fields` tool
+2. **Use the exact field name** as it appears in the schema
+3. **Custom fields override standard field names** in this system
 
-#### Sprint and Issue History Functions
-- `openSprints()`
-- `issueHistory()`
+### Example Schema vs Query Usage
 
-#### Approval and Watcher Functions
-- `myApproval()`, `myPending()`
-- `watchedIssues()`
-
-## Example Queries
-#### 1. Find issues assigned to the current user, created this week, and either `Open` or `Reopened` with high priority:
-```
-created > startOfWeek() AND assignee = currentUser() AND (status = Open OR (status = Reopened AND priority IN (High, Highest)))
+If the schema shows these custom fields:
+```json
+{
+  "id": "creator_id",
+  "name": "Creator ID",
+  "description": "Person who created the issue"
+}
 ```
 
-#### 2. Search for text fields containing `"lost luggage"` (fuzzy) and `"mars shuttle"` (within 5 words of each other), with a project filter:
-```
-text ~ "lost grn~ luggage" AND text ~ '"mars shuttle"~5' AND project IN ("Teams in Space")
-```
-
-#### 3. Find issues from a specific project where the field contains `"Test"`:
-```
-project = "Test"
+**✅ CORRECT - Use schema field name:**
+```jql
+"Creator ID" = "john.doe@example.com"
 ```
 
-## Default Work Types in Jira
+**❌ WRONG - Don't use standard Jira field:**
+```jql
+creator = "john.doe@example.com"  # This won't work with custom fields
+```
 
-### Business Project Work Types
+### Common Custom Field Patterns
 
-- **Task** - Represents work that needs to be done.
-- **Subtask** - A smaller piece of work required to complete a task.
+Based on the schema, you might see fields like:
+- `"Creator ID"` instead of `creator`
+- `"Issue Status"` instead of `status`
+- `"Issue Type"` instead of `issuetype`
+- `"Issue Description"` instead of `summary`
+- `"Owning Team"` (custom field)
+- `"Affected Service"` (custom field)
+- `"Escalation Manager"` (custom field)
 
-### Software Project Work Types
+### Best Practice for AI Agents
 
-- **Epic** - A large user story grouping related bugs, stories, and tasks.
-- **Bug** - A problem that impairs or prevents product functionality.
-- **Story** - The smallest unit of work needed to be done.
-- **Task** - Represents work that needs to be done.
-- **Subtask** - A breakdown of a standard work item (bug, story, or task).
+1. **Always call `jira_get_fields` first** to get the current schema
+2. **Map user requests to schema field names** before building queries
+3. **Use quoted field names** for custom fields with spaces
+4. **When in doubt, use the schema field name** rather than guessing
 
-### Jira Service Management Work Types
+### Custom Field Query Examples
+```jql
+# Using custom field names from schema
+"Issue Status" = "Open"
+"Creator ID" = "jane.smith@company.com"
+"Owning Team" = "Backend Services"
+"Affected Service" ~ "API"
 
-- **Change** - Requesting a modification in IT systems.
-- **IT Help** - Requesting assistance for an IT issue.
-- **Incident** - Reporting an IT service outage.
-- **New Feature** - Requesting a new capability or software feature.
-- **Problem** - Investigating the root cause of multiple incidents.
-- **Service Request** - Seeking assistance from an internal or customer service team.
-- **Service Request with Approval** - Request requiring managerial approval.
-- **Support** - Assistance for customer support issues.
+# Complex query with custom fields
+"Issue Status" IN ("Open", "In Progress") AND "Owning Team" = "Platform Team"
+```
 
-## Work Item Statuses
+## Practical Query Examples
 
-A work item's status represents its stage in the workflow. Default statuses come with Jira templates but can be customized.
+### Find Open Issues
+```
+status = "Open"
+```
 
-### Default Statuses
+### Find High Priority Bugs
+```
+issuetype = "Bug" AND priority = "High"
+```
 
-- **Open** - Ready for work.
-- **In Progress** - Actively being worked on.
-- **Done** - Work is completed.
-- **To Do** - Awaiting action.
-- **In Review** / **Under Review** - Awaiting peer review.
-- **Approved** - Work is approved.
-- **Cancelled** / **Rejected** - Work stopped or not accepted.
-- **Draft** - In progress, in draft stage.
-- **Published** - Released for internal use.
+### Find My Assigned Issues
+```
+assignee = "your.email@company.com"
+```
 
-### Jira-Specific Statuses
+### Find Recent Issues
+```
+created >= "-7d"
+```
 
-- **Reopened** - Work item resolved incorrectly.
-- **Resolved** - Awaiting verification.
-- **Closed** - Work item finished.
-- **Building** / **Build Broken** - Code-related statuses.
-- **Backlog** - Future sprint task.
-- **Selected for Development** - Verified for future work.
+### Find Issues by Text Content
+```
+summary ~ "login" OR description ~ "login"
+```
 
-### Jira Service Management Statuses
+### Complex Query Example
+```
+project = "MYPROJ" AND status IN ("Open", "In Progress") AND priority IN ("High", "Highest") AND assignee != empty
+```
 
-- **Declined**
-- **Waiting for Support / Customer**
-- **Pending / Canceled / Escalated**
-- **Awaiting Approval / Implementation**
-- **Work in Progress / Completed**
-- **Under Investigation**
+## Date Shortcuts
+- `-1d` = yesterday
+- `-1w` = last week
+- `-1M` = last month
+- `startOfWeek()` = beginning of current week
+- `endOfDay()` = end of today
 
-## Work Item Priorities
+## Tips for AI Agents
 
-- **Highest** - Blocks progress.
-- **High** - Could block progress.
-- **Medium** - May affect progress.
-- **Low** - Minor impact.
-- **Lowest** - Trivial impact.
+1. **Always quote string values**: Use `status = "Open"` not `status = Open`
 
-## Work Item Resolutions
+2. **Use IN for multiple values**: `status IN ("Open", "Resolved")` instead of `status = "Open" OR status = "Resolved"`
 
-- **Done** - Work completed.
-- **Won't Do** - No action taken.
-- **Duplicate** - Already exists.
+3. **Common patterns**:
+   - Find all open issues: `status = "Open"`
+   - Find user's work: `assignee = "user@email.com"`
+   - Find urgent items: `priority IN ("High", "Highest")`
+   - Find recent activity: `updated >= "-1d"`
 
-### Jira-Specific Resolutions
-- **Cannot Reproduce** - Issue not replicable.
+4. **When searching text**, use `~` operator: `summary ~ "keyword"`
 
-### Jira Service Management Resolutions
-- **Known Error** - Documented issue with a workaround.
-- **Hardware Failure / Software Failure** - Root cause identified.
+5. **For empty fields**: Use `IS EMPTY` or `IS NOT EMPTY`
+
+6. **Case sensitivity**: Field names are case-insensitive, values depend on your Jira setup
+
+## Quick Reference Values
+
+### Common Status Values
+- "Open", "In Progress", "Done", "Closed", "Resolved", "To Do"
+- "Reopened", "Under Review", "Approved", "Cancelled"
+
+### Common Priority Values
+- "Highest", "High", "Medium", "Low", "Lowest"
+
+### Common Issue Types
+- "Bug", "Story", "Task", "Epic", "Subtask"
+- "Change", "Incident", "Service Request"
+
+## Query Templates for Common Tasks
+
+### Workflow Queries
+```jql
+# Find all open work
+status IN ("Open", "To Do", "In Progress")
+
+# Find completed work
+status IN ("Done", "Closed", "Resolved")
+
+# Find work needing attention
+status = "Open" AND assignee IS NOT EMPTY
+```
+
+### Priority-Based Queries
+```jql
+# Critical issues
+priority IN ("Highest", "High")
+
+# All bugs with medium+ priority
+issuetype = "Bug" AND priority IN ("High", "Medium", "Highest")
+```
+
+### Time-Based Queries
+```jql
+# Created in last 7 days
+created >= "-7d"
+
+# Updated recently
+updated >= "-1d"
+
+# Old unresolved issues
+created <= "-30d" AND status != "Done"
+```
+
+### User Assignment Queries
+```jql
+# Unassigned work
+assignee IS EMPTY
+
+# My work
+assignee = currentUser()
+
+# Work created by me
+reporter = currentUser()
+```

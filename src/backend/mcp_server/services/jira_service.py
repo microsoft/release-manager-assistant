@@ -48,14 +48,22 @@ class JiraService(MCPToolBase):
     def register_tools(self, mcp):
         @mcp.tool(
             name="get_fields",
-            description="Get all available fields for Jira issues.",
+            description="""
+            Get all available fields for Jira issues.
+            This method must be invoked before creating, updating or searching for issues to understand the available fields.
+            Returns a list of field definitions including ID, name, and schema information.
+            """,
             tags=[self.domain.value]
         )
-        def jira_get_fields() -> List[Dict[str, Any]]:
+        def jira_get_field_schema() -> List[Dict[str, Any]]:
             """
             Get information about all available Jira fields.
             Returns a list of field definitions including ID, name, and schema information.
+
+            This method must be invoked before creating, updating or searching for issues to understand the available fields.
             """
+            self.logger.info("Jira MCP Server: Received get_field_schema request.")
+
             try:
                 rows, fieldnames = self._load_issues()
                 descriptions = self._load_field_descriptions()
@@ -107,13 +115,15 @@ class JiraService(MCPToolBase):
                     field_id = field_id or fld
 
                     fobj = {
-                        "id": field_id,
+                        # "id": field_id,
                         "name": display_name,
-                        "custom": is_custom,
+                        "custom": True,
                         "description": description,
                         "schema": schema
                     }
                     payload.append(fobj)
+
+                self.logger.info(f"Request get_field_schema processed successfully. {payload}")
                 return payload
             except Exception as e:
                 self.logger.error(f"Error retrieving field information: {str(e)}")
@@ -121,7 +131,12 @@ class JiraService(MCPToolBase):
 
         @mcp.tool(
             name="search_issues",
-            description="Search for Jira issues using JQL (Jira Query Language).",
+            description="""
+            Search for Jira issues using JQL (Jira Query Language).
+            This method allows searching for issues based on various criteria using JQL syntax.
+
+            IMPORTANT: This method must be invoked after get_field_schema to understand the available fields and their IDs.
+            """,
             tags=[self.domain.value]
         )
         def jira_search_issues(jql: str = "") -> Dict[str, Any]:
@@ -136,6 +151,8 @@ class JiraService(MCPToolBase):
             Returns:
                 A dictionary with total count and list of matching issues.
             """
+            self.logger.info(f"Jira MCP Server: Received search_issues request with JQL: {jql}")
+
             try:
                 # Load issues data
                 rows, _ = self._load_issues()
@@ -179,6 +196,7 @@ class JiraService(MCPToolBase):
 
                     issues.append(issue)
 
+                self.logger.info(f"Request processed successfully. Total issues: {len(issues)}")
                 return {"total": len(issues), "issues": issues}
             except Exception as e:
                 self.logger.error(f"Error in search_issues: {str(e)}")
@@ -186,7 +204,12 @@ class JiraService(MCPToolBase):
 
         @mcp.tool(
             name="create_issue",
-            description="Create a new Jira issue.",
+            description="""
+            Create a new Jira issue.
+            This method allows creating a new issue by specifying field values.
+
+            IMPORTANT: This method must be invoked after get_field_schema to understand the available fields and their IDs.
+            """,
             tags=[self.domain.value]
         )
         def jira_create_issue(fields: Dict[str, Any]) -> Dict[str, Any]:
@@ -200,6 +223,8 @@ class JiraService(MCPToolBase):
             Returns:
                 The created issue data.
             """
+            self.logger.info(f"Jira MCP Server: Received create_issue request {fields}")
+
             try:
                 rows, fieldnames = self._load_issues()
 
@@ -259,6 +284,7 @@ class JiraService(MCPToolBase):
                 # Save the updated dataset
                 self._save_issues(rows, all_fieldnames)
 
+                self.logger.info(f"Request processed successfully. New issue id: {new_id}")
                 return {"id": new_id, "key": new.get("key"), "fields": new}
 
             except Exception as e:
@@ -267,7 +293,12 @@ class JiraService(MCPToolBase):
 
         @mcp.tool(
             name="update_issue",
-            description="Update an existing Jira issue with new field values.",
+            description="""
+            Update an existing Jira issue with new field values.
+            This method allows updating fields of an existing issue by specifying the issue ID and new field values.
+
+            IMPORTANT: This method must be invoked after get_field_schema to understand the available fields and their IDs.
+            """,
             tags=[self.domain.value])
         def jira_update_issue(issue_id: str, fields: Dict[str, Any]) -> Dict[str, Any]:
             """
@@ -280,6 +311,8 @@ class JiraService(MCPToolBase):
             Returns:
                 Status of the update operation
             """
+            self.logger.info(f"Jira MCP Server: Received update_issue request for issue_id: {issue_id} with fields: {fields}")
+
             try:
                 rows, fieldnames = self._load_issues()
 
@@ -313,6 +346,7 @@ class JiraService(MCPToolBase):
                     all_fieldnames = list(dict.fromkeys(fieldnames))
                     self._save_issues(rows, all_fieldnames)
 
+                self.logger.info(f"Request processed successfully. Total Issue(s) updated: {len(updated)}")
                 return {
                     "success": len(updated) > 0,
                     "updated_count": len(updated),
@@ -325,7 +359,10 @@ class JiraService(MCPToolBase):
 
         @mcp.tool(
             name="get_jql_instructions",
-            description="Get Jira Query Language (JQL) instructions and examples.",
+            description="""
+            Get Jira Query Language (JQL) instructions and examples.
+            Returns a dictionary containing JQL instructions and examples.
+            """,
             tags=[self.domain.value]
         )
         def jira_get_jql_instructions() -> Dict[str, str]:
@@ -335,9 +372,13 @@ class JiraService(MCPToolBase):
             Returns:
                 A dictionary containing JQL instructions and examples.
             """
+            self.logger.info("Jira MCP Server: Received get_jql_instructions request.")
+
             try:
                 if self.jql_instruction_file.exists():
                     jql_content = self.jql_instruction_file.read_text(encoding='utf-8')
+
+                    self.logger.info("Jira MCP Server: Successfully retrieved JQL instructions.")
                     return {
                         "status": "success",
                         "instructions": jql_content
@@ -661,7 +702,7 @@ class JiraService(MCPToolBase):
         if field_name_lower in ["issue_id", "id"]:
             return "Issue ID"
         elif field_name_lower in ["creator_id", "creator"]:
-            return "Creator"
+            return "Creator ID"
         elif field_name_lower in ["created_at", "createdat"]:
             return "Created Date"
         elif field_name_lower in ["issue_type", "issuetype"]:
@@ -669,7 +710,7 @@ class JiraService(MCPToolBase):
         elif field_name_lower in ["issue_description", "summary", "description"]:
             return "Description"
         elif field_name_lower in ["issue_status", "status"]:
-            return "Status"
+            return "Issue Status"
         elif field_name_lower == "severity":
             return "Severity"
         elif field_name_lower == "discussion":
@@ -687,7 +728,7 @@ class JiraService(MCPToolBase):
         elif field_name_lower == "escalation_manager":
             return "Escalation Manager"
         elif field_name_lower == "key":
-            return "Issue Key"
+            return "Issue ID"
         else:
             # For other fields, convert snake_case to Title Case
             return ' '.join(word.capitalize() for word in field_name.split('_'))

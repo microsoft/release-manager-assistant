@@ -74,8 +74,6 @@ class JiraAgent(AgentBase):
         Returns:
             List of MCP tools for the agent
         """
-        tools = []
-
         # Determine which tools to use based on settings
         if settings.use_mcp_server:
             self._logger.info("Using MCP server for Jira integration")
@@ -111,7 +109,7 @@ class JiraAgent(AgentBase):
             )
             await jira_plugin.initialize()
 
-            tools = [
+            return [
                 JiraPlugin.create_issue,
                 JiraPlugin.update_issue,
                 JiraPlugin.search_issues,
@@ -119,4 +117,3 @@ class JiraAgent(AgentBase):
                 JiraPlugin.get_jira_jql_instructions,
             ]
 
-        return tools

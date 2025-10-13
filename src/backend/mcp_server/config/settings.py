@@ -19,7 +19,7 @@ class MCPServerConfig(BaseSettings):
     debug: bool = Field(default=False)
 
     # MCP specific settings
-    server_name: str = Field()
+    server_name: str = Field(default="ReleaseManagerMcpServer")
 
 
 # Global configuration instance

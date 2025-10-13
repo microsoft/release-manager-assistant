@@ -133,6 +133,4 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
-output id string = mcpServerApp.id
-output name string = mcpServerApp.name
-output mcpEndpoint string = 'http://${mcpServerApp.properties.configuration.ingress.fqdn}:12321/mcp'
+output mcpEndpoint string = 'http://${mcpServerApp.name}/mcp'

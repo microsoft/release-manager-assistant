@@ -81,10 +81,17 @@ hooks:
       Copy-Item -Path "./dist/*" -Destination "../../../infra/frontend-build/" -Recurse -Force
 
   postprovision:
-    shell: pwsh
-    run: |
-      Write-Host "Running post-provision script to assign AI Foundry roles..."
-      ./scripts/post-provision.ps1
+    posix:
+      shell: bash
+      run: |
+        echo "Running post-provision script to assign AI Foundry roles..."
+        chmod +x ./scripts/post-provision.sh
+        ./scripts/post-provision.sh
+    windows:
+      shell: pwsh
+      run: |
+        Write-Host "Running post-provision script to assign AI Foundry roles..."
+        ./scripts/post-provision.ps1
 
 infra:
   provider: bicep

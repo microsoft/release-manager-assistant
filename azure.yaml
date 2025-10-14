@@ -82,7 +82,7 @@ hooks:
 
   postprovision:
     posix:
-      shell: bash
+      shell: sh
       run: |
         echo "Running post-provision script to assign AI Foundry roles..."
         chmod +x ./scripts/post-provision.sh

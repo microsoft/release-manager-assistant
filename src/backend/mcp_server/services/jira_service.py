@@ -605,7 +605,9 @@ class JiraService(MCPToolBase):
             and_parts = [p.strip() for p in re.split(r'\bAND\b', part, flags=re.IGNORECASE)]
             all_and = True
             for clause in and_parts:
-                m = re.match(r'(?P<field>[\w\s\.\-]+)\s*(?P<op>=|~)\s*(?P<quote>["\']?)(?P<val>.*?)(?P=quote)\s*$', clause)
+                # Updated regex to handle field names with or without quotes
+                # Pattern supports: field = "value", "field" = "value", field = value, "field" = value
+                m = re.match(r'(?P<field_quote>["\']?)(?P<field>[\w\s\.\-]+)(?P=field_quote)\s*(?P<op>=|~)\s*(?P<val_quote>["\']?)(?P<val>.*?)(?P=val_quote)\s*$', clause)
                 if not m:
                     # Unsupported clause -> conservative False
                     all_and = False

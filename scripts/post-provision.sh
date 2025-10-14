@@ -76,6 +76,11 @@ fi
 # Output all environment values for debugging
 echo -e "${CYAN}Checking all azd environment values...${RESET}"
 all_env_values=$(azd env get-values)
+echo "$all_env_values" | while IFS='=' read -r key value; do
+    if [ -n "$key" ] && [ -n "$value" ]; then
+        printf "%-40s = %s\n" "$key" "$(echo "$value" | tr -d '"')"
+    fi
+done
 
 # Helper function to extract environment variable values
 get_azd_environment_value() {
@@ -84,12 +89,9 @@ get_azd_environment_value() {
     
     local match=$(echo "$all_env_values" | grep "$variable_name")
     if [ -n "$match" ]; then
-        echo -e "${GREEN}Found match for $variable_name: $match${RESET}"
         local value=$(echo "$match" | cut -d'=' -f2 | tr -d '"')
-        echo -e "${GREEN}Extracted value: $value${RESET}"
         echo "$value"
     else
-        echo -e "${YELLOW}$variable_name not found in environment${RESET}"
         return 1
     fi
 }

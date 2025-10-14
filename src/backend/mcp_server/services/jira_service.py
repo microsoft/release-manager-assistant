@@ -607,14 +607,22 @@ class JiraService(MCPToolBase):
             for clause in and_parts:
                 # Updated regex to handle field names with or without quotes
                 # Pattern supports: field = "value", "field" = "value", field = value, "field" = value
-                m = re.match(r'(?P<field_quote>["\']?)(?P<field>[\w\s\.\-]+)(?P=field_quote)\s*(?P<op>=|~)\s*(?P<val_quote>["\']?)(?P<val>.*?)(?P=val_quote)\s*$', clause)
+                # Use more flexible pattern that handles quotes properly
+                m = re.match(r'(["\']?)([^"\'=~]+)\1\s*([=~])\s*(["\']?)(.*?)\4\s*$', clause)
                 if not m:
-                    # Unsupported clause -> conservative False
-                    all_and = False
-                    break
-                field_name = m.group('field').strip()
-                op = m.group('op')
-                val = m.group('val').strip()
+                    # Try a simpler pattern without quotes
+                    m = re.match(r'([^=~]+)\s*([=~])\s*(.+)$', clause)
+                    if not m:
+                        # Unsupported clause -> conservative False
+                        all_and = False
+                        break
+                    field_name = m.group(1).strip().strip('\'"')
+                    op = m.group(2)
+                    val = m.group(3).strip().strip('\'"')
+                else:
+                    field_name = m.group(2).strip()
+                    op = m.group(3)
+                    val = m.group(5).strip()
 
                 # Try both exact and case-insensitive field name match
                 # First, try direct access with the field name

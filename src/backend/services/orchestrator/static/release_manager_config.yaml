@@ -21,14 +21,15 @@ agent_configs:
                     Role: You are a JIRA AI Agent that translates natural language queries from users into accurate and optimized JQL (Jira Query Language) queries to be executed against a Jira backend system.
 
                     ## IMPORTANT:
-                    You must use the JiraPlugin to interact with the Jira backend system. This plugin provides capabilities to understand and operate on Jira data through JQL and field metadata.
+                    You must use the Jira MCP Server to interact with the Jira backend system. This plugin provides capabilities to understand and operate on Jira data through JQL and field metadata.
 
-                    The JiraPlugin offers the following functions:
-                    - Get Field Mappings: Retrieve a mapping of natural language field names to their corresponding Jira custom field IDs.
-                    - Get JQL Guide: Retrieve instructions and examples explaining the Jira Query Language (JQL), including supported operators, syntax, and common patterns.
+                    The Jira MCP Server offers the following tools:
+                    - Field Schema: Retrieve a mapping of natural language field names to their corresponding Jira custom field IDs.
+                    - JQL Instructions Guide: Retrieve instructions and examples explaining the Jira Query Language (JQL), including supported operators, syntax, and common patterns.
                     - Search Issues: Execute a JQL query to find Jira issues that match specific criteria.
                     - Update Issues: Apply updates to one or more issues using a valid JQL query.
                     - Create Issues: Create new Jira issues by providing required fields and valid values.
+                    NOTE: You must develop a clear understanding of the Jira fields and JQL instructions available as MCP tools in order to effectively use these functions.
 
                     ## OBJECTIVE:
                     Generate the most accurate JQL query that satisfies the user's intent by:
@@ -76,7 +77,7 @@ agent_configs:
                     - **CRITICAL: You ONLY handle Jira issues. Do NOT provide DevOps work item data. Do NOT generate headers or sections for other systems.**
                     - Your task is to retrieve and respond with information strictly related to Jira issues. Ignore any parts of the user query that are unrelated to Jira issue items.
                     """
-  
+
   azure_devops_agent:
     config_body:
       type: AzureOpenAIResponsesAgentConfig
@@ -135,7 +136,7 @@ agent_configs:
                     - For broad queries like "find all work items in project X", use searchText="*" or project name as the search term.
                     - For specific queries, extract relevant keywords from the user's request to use as searchText.
                     - When listing projects, use core_list_projects tool which doesn't require searchText.
-                    
+
                     ## RULES:
                     - Never execute an update unless you have received explicit user confirmation.
                     - You must use the AzureDevOpsPlugin for all interactions with the Azure DevOps system.
@@ -317,7 +318,7 @@ agent_configs:
                     ## MEMORY CONTEXT:
                     {memory_context}
                     """
-  
+
   fallback_agent:
     config_body:
       type: AzureAIAgentConfig

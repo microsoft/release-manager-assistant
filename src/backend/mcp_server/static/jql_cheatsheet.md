@@ -1,52 +1,49 @@
 # JQL (Jira Query Language) Guide for AI Agents
 
 ## Basic Query Pattern
+
 ```
 FIELD OPERATOR VALUE
 ```
 
 Examples:
-- `status = "Open"`
-- `priority = "High"`
-- `assignee = "john.doe@example.com"`
+
+- `"Issue Status" = "Open"`
+- `"Priority Level" = "High"`
+- `"Assignee ID" = "john.doe@example.com"`
 
 ## Combining Queries
+
 Use `AND`, `OR`, and parentheses `()` to combine conditions:
-- `status = "Open" AND priority = "High"`
-- `(status = "Open" OR status = "In Progress") AND assignee = "john.doe"`
+
+- `"Issue Status" = "Open" AND "Priority Level" = "High"`
+- `("Issue Status" = "Open" OR "Issue Status" = "In Progress") AND "Assignee ID" = "john.doe"`
 
 ## Essential Operators
 
 ### Exact Match
-- `=` equals: `status = "Open"`
-- `!=` not equals: `status != "Closed"`
+
+- `=` equals: `"Issue Status" = "Open"`
+- `!=` not equals: `"Issue Status" != "Closed"`
 
 ### Text Search
-- `~` contains: `summary ~ "bug"`
-- `!~` does not contain: `summary !~ "test"`
+
+- `~` contains: `"Issue Description" ~ "bug"`
+- `!~` does not contain: `"Issue Description" !~ "test"`
 
 ### Lists
-- `IN` matches any: `status IN ("Open", "In Progress")`
-- `NOT IN` excludes: `priority NOT IN ("Low", "Lowest")`
+
+- `IN` matches any: `"Issue Status" IN ("Open", "In Progress")`
+- `NOT IN` excludes: `"Priority Level" NOT IN ("Low", "Lowest")`
 
 ### Comparison (for dates/numbers)
-- `>` greater than: `created > "2024-01-01"`
-- `<` less than: `updated < "2024-12-31"`
 
-## Common Fields and Values
-
-### Standard Fields
-- `status`: "Open", "In Progress", "Done", "Closed", "Resolved"
-- `priority`: "Highest", "High", "Medium", "Low", "Lowest"
-- `assignee`: email addresses or usernames
-- `creator`: email addresses or usernames
-- `summary`: issue title/description
-- `project`: project key or name
-- `created`: date field
-- `updated`: date field
+- `>` greater than: `"Created Date" > "2024-01-01"`
+- `<` less than: `"Updated Date" < "2024-12-31"`
 
 ### Issue Types
-- `issuetype`: "Bug", "Story", "Task", "Epic", "Subtask"
+
+- `"Issue Type"`: "Bug", "Story"
 
 ## Custom Fields - IMPORTANT for AI Agents
 
@@ -61,6 +58,7 @@ Use `AND`, `OR`, and parentheses `()` to combine conditions:
 ### Example Schema vs Query Usage
 
 If the schema shows these custom fields:
+
 ```json
 {
   "id": "creator_id",
@@ -70,11 +68,13 @@ If the schema shows these custom fields:
 ```
 
 **✅ CORRECT - Use schema field name:**
+
 ```jql
 "Creator ID" = "john.doe@example.com"
 ```
 
 **❌ WRONG - Don't use standard Jira field:**
+
 ```jql
 creator = "john.doe@example.com"  # This won't work with custom fields
 ```
@@ -82,6 +82,7 @@ creator = "john.doe@example.com"  # This won't work with custom fields
 ### Common Custom Field Patterns
 
 Based on the schema, you might see fields like:
+
 - `"Creator ID"` instead of `creator`
 - `"Issue Status"` instead of `status`
 - `"Issue Type"` instead of `issuetype`
@@ -98,6 +99,7 @@ Based on the schema, you might see fields like:
 4. **When in doubt, use the schema field name** rather than guessing
 
 ### Custom Field Query Examples
+
 ```jql
 # Using custom field names from schema
 "Issue Status" = "Open"
@@ -106,42 +108,49 @@ Based on the schema, you might see fields like:
 "Affected Service" ~ "API"
 
 # Complex query with custom fields
-"Issue Status" IN ("Open", "In Progress") AND "Owning Team" = "Platform Team"
+Issue Status IN ("Open", "In Progress") AND "Owning Team" = "Platform Team"
 ```
 
 ## Practical Query Examples
 
 ### Find Open Issues
-```
-status = "Open"
+
+```jql
+"Issue Status" = "Open"
 ```
 
 ### Find High Priority Bugs
-```
-issuetype = "Bug" AND priority = "High"
+
+```jql
+"Issue Type" = "Bug" AND "Priority Level" = "High"
 ```
 
 ### Find My Assigned Issues
-```
-assignee = "your.email@company.com"
+
+```jql
+"Assignee ID" = "your.email@company.com"
 ```
 
 ### Find Recent Issues
-```
-created >= "-7d"
+
+```jql
+"Created Date" >= "-7d"
 ```
 
 ### Find Issues by Text Content
-```
-summary ~ "login" OR description ~ "login"
+
+```jql
+"Issue Description" ~ "login" OR "Issue Details" ~ "login"
 ```
 
 ### Complex Query Example
-```
-project = "MYPROJ" AND status IN ("Open", "In Progress") AND priority IN ("High", "Highest") AND assignee != empty
+
+```jql
+"Project Key" = "MYPROJ" AND "Issue Status" IN ("Open", "In Progress") AND "Priority Level" IN ("High", "Highest") AND "Assignee ID" != empty
 ```
 
 ## Date Shortcuts
+
 - `-1d` = yesterday
 - `-1w` = last week
 - `-1M` = last month
@@ -150,17 +159,17 @@ project = "MYPROJ" AND status IN ("Open", "In Progress") AND priority IN ("High"
 
 ## Tips for AI Agents
 
-1. **Always quote string values**: Use `status = "Open"` not `status = Open`
+1. **Always quote string values**: Use `"Issue Status" = "Open"` not `"Issue Status" = Open`
 
-2. **Use IN for multiple values**: `status IN ("Open", "Resolved")` instead of `status = "Open" OR status = "Resolved"`
+2. **Use IN for multiple values**: `"Issue Status" IN ("Open", "Resolved")` instead of `"Issue Status" = "Open" OR "Issue Status" = "Resolved"`
 
 3. **Common patterns**:
-   - Find all open issues: `status = "Open"`
-   - Find user's work: `assignee = "user@email.com"`
-   - Find urgent items: `priority IN ("High", "Highest")`
-   - Find recent activity: `updated >= "-1d"`
+   - Find all open issues: `"Issue Status" = "Open"`
+   - Find user's work: `"Assignee ID" = "user@email.com"`
+   - Find urgent items: `"Priority Level" IN ("High", "Highest")`
+   - Find recent activity: `"Updated Date" >= "-1d"`
 
-4. **When searching text**, use `~` operator: `summary ~ "keyword"`
+4. **When searching text**, use `~` operator: `"Issue Description" ~ "keyword"`
 
 5. **For empty fields**: Use `IS EMPTY` or `IS NOT EMPTY`
 
@@ -169,59 +178,66 @@ project = "MYPROJ" AND status IN ("Open", "In Progress") AND priority IN ("High"
 ## Quick Reference Values
 
 ### Common Status Values
+
 - "Open", "In Progress", "Done", "Closed", "Resolved", "To Do"
 - "Reopened", "Under Review", "Approved", "Cancelled"
 
 ### Common Priority Values
+
 - "Highest", "High", "Medium", "Low", "Lowest"
 
 ### Common Issue Types
+
 - "Bug", "Story", "Task", "Epic", "Subtask"
 - "Change", "Incident", "Service Request"
 
 ## Query Templates for Common Tasks
 
 ### Workflow Queries
+
 ```jql
 # Find all open work
-status IN ("Open", "To Do", "In Progress")
+"Issue Status" IN ("Open", "To Do", "In Progress")
 
 # Find completed work
-status IN ("Done", "Closed", "Resolved")
+"Issue Status" IN ("Done", "Closed", "Resolved")
 
 # Find work needing attention
-status = "Open" AND assignee IS NOT EMPTY
+"Issue Status" = "Open" AND "Assignee ID" IS NOT EMPTY
 ```
 
 ### Priority-Based Queries
+
 ```jql
 # Critical issues
-priority IN ("Highest", "High")
+"Priority Level" IN ("Highest", "High")
 
 # All bugs with medium+ priority
-issuetype = "Bug" AND priority IN ("High", "Medium", "Highest")
+"Issue Type" = "Bug" AND "Priority Level" IN ("High", "Medium", "Highest")
 ```
 
 ### Time-Based Queries
+
 ```jql
 # Created in last 7 days
-created >= "-7d"
+"Created Date" >= "-7d"
 
 # Updated recently
-updated >= "-1d"
+"Updated Date" >= "-1d"
 
 # Old unresolved issues
-created <= "-30d" AND status != "Done"
+"Created Date" <= "-30d" AND "Issue Status" != "Done"
 ```
 
 ### User Assignment Queries
+
 ```jql
 # Unassigned work
-assignee IS EMPTY
+"Assignee ID" IS EMPTY
 
 # My work
-assignee = currentUser()
+"Assignee ID" = currentUser()
 
 # Work created by me
-reporter = currentUser()
+"Creator ID" = currentUser()
 ```

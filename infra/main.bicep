@@ -321,7 +321,7 @@ output AZURE_APPLICATION_INSIGHTS_CONNECTION_STRING string = monitoring.outputs.
 
 output SESSION_MANAGER_URL string = sessionManager.outputs.uri
 output ORCHESTRATOR_URL string = orchestrator.outputs.uri
-output MCP_SERVER_URL string = mcpServer.outputs.mcpEndpoint
+output MCP_SERVER_URL string = useJiraMcpServer ? mcpServer.outputs.mcpEndpoint : ''
 output FRONTEND_URL string = staticWebApp.outputs.uri
 
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer

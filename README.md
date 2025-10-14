@@ -36,7 +36,7 @@ The architecture is built on a modular and secure AI-native design leveraging:
   - **Fallback Agent**: Provides graceful degradation when services are unavailable
 - **Azure AI Foundry Service**: Cloud-based agents with integrated tools (Code Interpreter, SharePoint)
 - **Microsoft Agent Framework**: Advanced agent orchestration, memory management, and tools integration
-- **Model Context Protocol (MCP)**: Standardized Azure DevOps integration with auto-discovery of tools and capabilities
+- **Model Context Protocol (MCP)**: Standardized Azure DevOps integration with auto-discovery of tools and capabilities (also mock MCP server support)
 - **Azure Key Vault & Azure Storage**: Secure secret and data management with encrypted credential storage
 - **Redis Integration**: Session management and message queuing for scalable operations
 
@@ -58,14 +58,14 @@ For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIO
 - **Azure DevOps organization access** with work item, build, and release permissions
 - **Node.js 20+** (required for Azure DevOps MCP Server)
 - **Python >= 3.12** for agent runtime
-- **Docker runtime** for running service containers locally (For more information on local execution, refer to this guide: [LOCAL EXECUTION IN DOCKER](../../DOCKER.README.md))
+- **Docker runtime** for running service containers locally.
 - **Visual Studio Code** with Python extension (recommended for development)
 
 ### Quick Start Options
 
 1. **Docker Deployment** (Recommended): Use pre-configured VS Code tasks for containerized deployment
 2. **Local Development**: Full debugging capabilities with VS Code launch configurations
-3. **Production Setup**: Azure-hosted deployment with proper secret management
+3. **Production Setup**: Azure-hosted deployment with proper secret management (via `azd`)
 
 ---
 
@@ -104,7 +104,7 @@ BUSINESS SCENARIO
   - Team and iteration management
   - Pull request tracking
 - **Flexible Authentication**: Support for both Azure CLI and Personal Access Token authentication
-- **JIRA Deep Integration**: Custom field support, JQL optimization, and secure credential handling
+- **JIRA Deep Integration**: Custom field schema support, pre-configured JQL instructions with optimization techniques etc.
 - **Unified, contextual insights**: Data synthesis from disparate systems with intelligent agent coordination
 
 ---
@@ -117,7 +117,7 @@ SUPPORTING DOCUMENTATION
 
 - **[JIRA SDK](https://jira.readthedocs.io/)** - Complete JIRA API integration with custom field support
 - **[JIRA API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)** - Direct REST API access with JQL optimization
-  > ⚠️ **Warning:** Jira Plugin uses HTTP BASIC authentication which is not recommended for Production workloads. Ensure token auth is configured.
+  > ⚠️ **Warning:** Jira Plugin uses HTTP BASIC authentication which is not recommended for Production workloads. Ensure token auth is configured with your OAuth provider.
 - **[Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)** - Comprehensive Model Context Protocol integration featuring:
     - Work Items (create, read, update, search, batch operations)
     - Builds and Releases (status tracking, artifact management)

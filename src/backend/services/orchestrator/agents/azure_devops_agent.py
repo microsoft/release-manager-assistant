@@ -1,14 +1,14 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from agent_framework import ChatAgent
+from agent_framework import ChatAgent, MCPStdioTool, MCPStreamableHTTPTool
 from agent_framework.azure import AzureOpenAIResponsesClient
 
 from common.telemetry.app_logger import AppLogger
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.configuration.agent_config import AzureOpenAIResponsesAgentConfig
 
-from plugins.az_devops_plugin import AzDevOpsPluginFactory
+from models.devops_settings import DevOpsSettings
 
 
 class AzureDevOpsAgent(AgentBase):
@@ -38,17 +38,13 @@ class AzureDevOpsAgent(AgentBase):
             ChatAgent: The initialized Azure DevOps agent
         """
         try:
-            mcp_plugin_factory: AzDevOpsPluginFactory = kwargs.get('mcp_plugin_factory')
+            settings = DevOpsSettings(**kwargs)
+            tools = await self._get_tools(settings)
 
-            # Use pre-initialized plugin factory if available, otherwise create new one
-            if mcp_plugin_factory and not mcp_plugin_factory.is_initialized:
-                self._logger.error("Provided MCP plugin factory is not initialized")
-
-            self._logger.info("Using pre-initialized Azure DevOps MCP plugin")
             azure_devops_agent = client.create_agent(
                 name=configuration.agent_name,
                 instructions=configuration.instructions,
-                tools=[mcp_plugin_factory.plugin],
+                tools=[tools],
             )
 
             self._logger.info(f"Successfully created Azure DevOps agent: {configuration.agent_name}")
@@ -56,3 +52,28 @@ class AzureDevOpsAgent(AgentBase):
         except Exception as ex:
             self._logger.error(f"Error creating Azure DevOps agent: {ex}")
             return None
+
+    async def _get_tools(self, settings: DevOpsSettings) -> MCPStdioTool | MCPStreamableHTTPTool:
+        """
+        Create MCP client tools for Jira integration.
+
+        Args:
+            settings: JiraSettings containing MCP server configuration
+
+        Returns:
+            List of MCP tools for the agent
+        """
+        # Determine which tools to use based on settings
+        if settings.use_mcp_server:
+            self._logger.info("Using MCP server for Azure DevOps integration")
+            return MCPStreamableHTTPTool(
+                name="azure-devops-mcp-server",
+                description="Azure DevOps MCP server to create, update and search Azure DevOps work items.",
+                url=settings.mcp_server_endpoint,
+            )
+        else:
+            if not settings.mcp_plugin_factory or not settings.mcp_plugin_factory.plugin:
+                raise ValueError("MCP plugin factory must be provided when not using mock MCP server")
+            
+            self._logger.info("Using pre-initialized Azure DevOps MCP plugin")
+            return settings.mcp_plugin_factory.plugin

@@ -4,7 +4,7 @@ RUN tdnf -y update && tdnf -y install build-essential curl ca-certificates
 
 WORKDIR /src
 
-# Copy the jira mcp directory
+# Copy the mcp directory (including services and synthetic datasets)
 COPY ./mcp_server /src/mcp_server
 
 # Install dependencies

@@ -22,9 +22,9 @@ from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCreden
 from azure.identity import DefaultAzureCredential
 
 from models.agents import Agent
+from models.devops_settings import DevOpsSettings
 from models.jira_settings import JiraSettings
 from models.visualization_settings import VisualizationSettings
-from plugins.az_devops_plugin import AzDevOpsPluginFactory
 
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.common.answer import Answer
@@ -61,16 +61,16 @@ class AgentOrchestrator:
         logger: AppLogger,
         message_handler: RedisMessageHandler,
         jira_settings: JiraSettings,
-        mcp_plugin_factory: AzDevOpsPluginFactory,
+        devops_settings: DevOpsSettings,
         visualization_settings: VisualizationSettings,
         project_endpoint: str,
-        configuration: ResolvedOrchestratorConfig = None
+        configuration: ResolvedOrchestratorConfig = None,
     ) -> None:
         self.logger = logger
         self.message_handler = message_handler
 
         self.jira_settings = jira_settings
-        self.mcp_plugin_factory = mcp_plugin_factory
+        self.devops_settings = devops_settings
 
         self.blob_store_helper = BlobStoreHelper(
             logger=self.logger,
@@ -131,7 +131,7 @@ class AgentOrchestrator:
         if agent == Agent.JIRA_AGENT:
             kwargs['jira_settings'] = self.jira_settings
         elif agent == Agent.AZURE_DEVOPS_AGENT:
-            kwargs['mcp_plugin_factory'] = self.mcp_plugin_factory
+            kwargs['devops_settings'] = self.devops_settings
 
         try:
             _agent = await self.agent_factory.create_agent(

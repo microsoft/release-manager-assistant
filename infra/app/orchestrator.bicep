@@ -82,6 +82,12 @@ param jiraServerPassword string = ''
 @description('Whether to use the internal Jira MCP server instead of direct Jira connection')
 param useJiraMcpServer bool = false
 
+@description('Whether to use the official Azure DevOps MCP server instead of direct Azure DevOps connection')
+param useAzureDevOpsMcpServer bool = false
+
+@description('Azure DevOps MCP server endpoint (optional when using direct Azure DevOps connection)')
+param azureDevOpsMcpServerEndpoint string = ''
+
 @description('Azure DevOps organization name')
 @secure()
 param azureDevOpsOrgName string = ''
@@ -158,7 +164,12 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
           name: 'storage-account-key'
           value: storageAccountKey
         }
-      ], !empty(jiraServerEndpoint) ? [
+      ], !empty(azureDevOpsMcpServerEndpoint) ? [
+        {
+          name: 'azure-devops-mcp-server-endpoint'
+          value: azureDevOpsMcpServerEndpoint
+        }
+      ] : [], !empty(jiraServerEndpoint) ? [
         {
           name: 'jira-server-endpoint'
           value: jiraServerEndpoint
@@ -261,7 +272,16 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
               name: 'USE_JIRA_MCP_SERVER'
               value: string(useJiraMcpServer)
             }
-          ], !empty(jiraServerEndpoint) ? [
+            {
+              name: 'USE_AZURE_DEVOPS_MCP_SERVER'
+              value: string(useAzureDevOpsMcpServer)
+            }
+          ], !empty(azureDevOpsMcpServerEndpoint) ? [
+            {
+              name: 'AZURE-DEVOPS-MCP-SERVER-ENDPOINT'
+              value: azureDevOpsMcpServerEndpoint
+            }
+          ] : [], !empty(jiraServerEndpoint) ? [
             {
               name: 'JIRA-SERVER-ENDPOINT'
               value: jiraServerEndpoint

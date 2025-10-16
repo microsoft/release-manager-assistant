@@ -169,6 +169,7 @@ azd up
    JIRA_SERVER_USERNAME=your-email@domain.com
    JIRA_SERVER_PASSWORD=your-api-token
    
+   USE_AZURE_DEVOPS_MCP_SERVER=true
    AZURE_DEVOPS_ORG_NAME=your-org
    AZURE_DEVOPS_EXT_PAT=your-personal-access-token
    ```
@@ -360,6 +361,10 @@ The solution uses a plugin for Jira Servers or an MCP Server with synthetic data
    ```
 
 #### Azure DevOps Integration (Optional)
+
+The solution uses official Azure DevOps MCP Server if required settings are provided. It falls back to using an MCP Server with synthetic data if needed. Configuration can be done via environment variables:
+
+> ⚠️ **Warning:** Ensure `USE_AZURE_DEVOPS_MCP_SERVER` is set to `true` if MCP Server use is desired. `AZURE_DEVOPS_ORG_NAME` and `AZURE_DEVOPS_EXT_PAT` are optional in that case and will be ignored.
 
 1. **Create Personal Access Token:**
    - Go to Azure DevOps → User Settings → Personal Access Tokens

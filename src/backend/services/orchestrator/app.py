@@ -14,6 +14,7 @@ from redis.asyncio import Redis
 
 from config import DefaultConfig
 from models.devops_settings import DevOpsSettings
+from models.devops_mcp_settings import DevOpsMcpSettings
 from models.jira_settings import JiraSettings
 from models.visualization_settings import VisualizationSettings
 from agents.agent_orchestrator import AgentOrchestrator
@@ -62,11 +63,14 @@ orchestrators = ThreadSafeCache[AgentOrchestrator](logger)
 # Global MCP plugin factory for Azure DevOps
 mcp_plugin_factory = None
 
+# Load configuration based on MCP server settings
 default_runtime_config = load_file(
     os.path.join(
         os.path.dirname(__file__),
         "static",
-        "release_manager_config.yaml",
+        "release_manager_with_mcp_server_config.yaml"
+        if DefaultConfig.USE_JIRA_MCP_SERVER and DefaultConfig.USE_AZURE_DEVOPS_MCP_SERVER
+        else "release_manager_config.yaml",
     ),
     "yaml",
 )
@@ -125,13 +129,17 @@ async def run_agent_orchestration(request_payload: str, message_handler: RedisMe
                     config_file_path=AGENT_CONFIG_FILE_PATH,
                     use_mcp_server=DefaultConfig.USE_JIRA_MCP_SERVER,
                 ),
+                devops_settings=DevOpsSettings(
+                    use_mcp_server=DefaultConfig.USE_AZURE_DEVOPS_MCP_SERVER,
+                    mcp_server_endpoint=DefaultConfig.AZURE_DEVOPS_MCP_SERVER_ENDPOINT,
+                    mcp_plugin_factory=mcp_plugin_factory,
+                ),
                 visualization_settings=VisualizationSettings(
                     storage_account_name=DefaultConfig.STORAGE_ACCOUNT_NAME,
                     visualization_data_blob_container=DefaultConfig.VISUALIZATION_DATA_CONTAINER,
                 ),
                 configuration=orchestrator_runtime_config,
                 project_endpoint=DefaultConfig.AZURE_AI_PROJECT_ENDPOINT,
-                mcp_plugin_factory=mcp_plugin_factory,
             )
 
             # Initialize workflow
@@ -202,7 +210,7 @@ async def __initialize_azure_devops_mcp() -> bool:
 
     try:
         # Create DevOps settings based on the mcp.json specification
-        devops_settings = DevOpsSettings(
+        devops_settings = DevOpsMcpSettings(
             azure_org_name=DefaultConfig.AZURE_DEVOPS_ORG_NAME,
             mcp_server_command="npx",
             mcp_server_args=[
@@ -291,10 +299,13 @@ async def on_startup(app):
     """Initialize resources and connections during server startup."""
     logger.info("Starting Release Manager orchestrator service...")
 
-    # Initialize Azure DevOps MCP server
-    mcp_success = await __initialize_azure_devops_mcp()
-    if not mcp_success:
-        logger.warning("Azure DevOps MCP initialization failed - functionality may be limited.")
+    if DefaultConfig.USE_AZURE_DEVOPS_MCP_SERVER:
+        logger.info("Azure DevOps MCP server usage is enabled. Skipping official MCP server initialization.")
+    else:
+        # Initialize Azure DevOps MCP server
+        mcp_success = await __initialize_azure_devops_mcp()
+        if not mcp_success:
+            logger.warning("Azure DevOps MCP initialization failed - functionality may be limited.")
 
     logger.info("Initializing Agent Orchestrator workers..")
     asyncio.create_task(run_workers())

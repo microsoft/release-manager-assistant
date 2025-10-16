@@ -7,6 +7,7 @@ import os
 from config.settings import config
 from core.factory import MCPToolFactory
 from services.jira_service import JiraService
+from services.azure_devops_service import AzureDevopsService
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +20,7 @@ factory = MCPToolFactory()
 
 # Initialize services
 factory.register_service(JiraService())
+factory.register_service(AzureDevopsService())
 
 def create_fastmcp_server():
     """Create and configure FastMCP server."""

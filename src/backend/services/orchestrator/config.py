@@ -57,8 +57,13 @@ class DefaultConfig:
                 cls.JIRA_SERVER_USERNAME = config_reader.read_config_value(Config.JIRA_SERVER_USERNAME) if not cls.USE_JIRA_MCP_SERVER else None
                 cls.JIRA_SERVER_PASSWORD = config_reader.read_config_value(Config.JIRA_SERVER_PASSWORD) if not cls.USE_JIRA_MCP_SERVER else None
 
-                cls.AZURE_DEVOPS_ORG_NAME = config_reader.read_config_value(Config.AZURE_DEVOPS_ORG_NAME)
-                cls.AZURE_DEVOPS_EXT_PAT = config_reader.read_config_value(Config.AZURE_DEVOPS_EXT_PAT)
+                # Azure DevOps configuration
+                cls.USE_AZURE_DEVOPS_MCP_SERVER = str_to_bool(os.getenv(Config.USE_AZURE_DEVOPS_MCP_SERVER.value, "true"))
+                cls.AZURE_DEVOPS_MCP_SERVER_ENDPOINT = os.getenv(Config.AZURE_DEVOPS_MCP_SERVER_ENDPOINT.value) if cls.USE_AZURE_DEVOPS_MCP_SERVER else None
+
+                # Only read these values if using the official Azure DevOps MCP server
+                cls.AZURE_DEVOPS_ORG_NAME = config_reader.read_config_value(Config.AZURE_DEVOPS_ORG_NAME) if not cls.USE_AZURE_DEVOPS_MCP_SERVER else None
+                cls.AZURE_DEVOPS_EXT_PAT = config_reader.read_config_value(Config.AZURE_DEVOPS_EXT_PAT) if not cls.USE_AZURE_DEVOPS_MCP_SERVER else None
 
                 cls.AZURE_AI_PROJECT_ENDPOINT = config_reader.read_config_value(Config.AZURE_AI_PROJECT_ENDPOINT)
                 cls.AZURE_AI_MODEL_DEPLOYMENT_NAME = config_reader.read_config_value(Config.AZURE_AI_MODEL_DEPLOYMENT_NAME)

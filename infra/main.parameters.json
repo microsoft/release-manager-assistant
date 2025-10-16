@@ -11,6 +11,9 @@
     "useJiraMcpServer": {
       "value": "${USE_JIRA_MCP_SERVER}"
     },
+    "useAzureDevOpsMcpServer": {
+      "value": "${USE_AZURE_DEVOPS_MCP_SERVER}"
+    },
     "jiraServerEndpoint": {
       "value": "${JIRA_SERVER_ENDPOINT=}"
     },

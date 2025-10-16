@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 
 from agent_framework import MCPStdioTool, AIFunction
 
-from models.devops_settings import DevOpsSettings
+from models.devops_mcp_settings import DevOpsMcpSettings
 from common.telemetry.app_logger import AppLogger
 
 
@@ -64,7 +64,7 @@ class AzDevOpsPluginFactory:
 
     async def create_plugin(
         self,
-        devops_settings: DevOpsSettings,
+        devops_settings: DevOpsMcpSettings,
         plugin_name: str = "DevOpsPlugin"
     ) -> tuple[MCPStdioTool, AzureDevOpsPluginStatus]:
         """Create and configure an Azure DevOps MCP plugin.
@@ -135,7 +135,7 @@ class AzDevOpsPluginFactory:
 
         self._plugin = None
 
-    def __validate_settings(self, settings: DevOpsSettings) -> None:
+    def __validate_settings(self, settings: DevOpsMcpSettings) -> None:
         """Validate required settings are present and have valid values."""
         # Check for required configuration fields
         required_fields = ['azure_org_name', 'mcp_server_command', 'mcp_server_args']
@@ -219,7 +219,7 @@ class AzDevOpsPluginFactory:
 
     async def __create_mcp_plugin(
         self,
-        settings: DevOpsSettings,
+        settings: DevOpsMcpSettings,
         plugin_name: str
     ) -> MCPStdioTool:
         """Create the MCP plugin with secure environment setup."""

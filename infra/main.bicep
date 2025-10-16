@@ -21,6 +21,9 @@ param mcp_server_image_name string = 'mcr.microsoft.com/azuredocs/containerapps-
 @description('Whether to use the internal Jira MCP server instead of direct Jira connection')
 param useJiraMcpServer bool = false
 
+@description('Whether to use the official Azure DevOps MCP server instead of direct Azure DevOps connection')
+param useAzureDevOpsMcpServer bool = false
+
 // Note: These parameters are no longer directly used in bicep
 // They should be handled externally or via environment variables
 // to avoid exposing sensitive values in deployment logs
@@ -283,6 +286,8 @@ module orchestrator './app/orchestrator.bicep' = {
     jiraServerEndpoint: useJiraMcpServer ? mcpServer.outputs.mcpEndpoint : jiraServerEndpoint
     jiraServerUsername: jiraServerUsername
     jiraServerPassword: jiraServerPassword
+    useAzureDevOpsMcpServer: useAzureDevOpsMcpServer
+    azureDevOpsMcpServerEndpoint: useAzureDevOpsMcpServer ? mcpServer.outputs.mcpEndpoint : ''
     azureDevOpsOrgName: azureDevOpsOrgName
     azureDevOpsExtPat: azureDevOpsExtPat
     storageAccountKey: storage.outputs.primaryKey

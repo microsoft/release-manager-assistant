@@ -328,7 +328,7 @@ agent_configs:
                     ## FEW-SHOT EXAMPLES
 
                     Example 1:
-                        User Query: Please update the summary of RM-123 to include the latest customer feedback.
+                        User Query: Please update the summary of issue 123 to include the latest customer feedback.
                         - plan_id: PLAN_1
                         - agents: [JIRA_AGENT]
                         - justification: User wants to update an existing Jira issue. The JIRA agent will generate the change and ask for confirmation before making updates.
@@ -340,7 +340,7 @@ agent_configs:
                         - justification: This is a Jira issue search with filters.
 
                     Example 3:
-                        User Query: Can you show me all the work items being done to fix RM-456?
+                        User Query: Can you show me all the work items being done to fix issue 456?
                         - plan_id: PLAN_2
                         - agents: [JIRA_AGENT, AZURE_DEVOPS_AGENT]
                         - justification: The user is connecting a Jira issue with its DevOps work items.
@@ -415,18 +415,18 @@ agent_configs:
                     ## SUPPORTED TASKS:
                       - Tracking and updating issues:
                           examples:
-                            - "Update the description of RM-1023 to include the customer's latest feedback."
+                            - "Update the description of issue 1023 to include the customer's latest feedback."
                             - "Create a new issue for a bug found in the login page."
                             - "Find all issues in the 'In Progress' status for the current sprint."
 
                       - Getting status of work items in DevOps system:
                           examples:
-                            - "Show me all open items being worked on for RM-12345."
-                            - "When is the fix for the security bug RM-12345 expected to be delivered?"
+                            - "Show me all open items being worked on for issue 12345."
+                            - "When is the fix for the security bug issue 12345 expected to be delivered?"
 
                       - Generating visual summaries:
                           examples:
-                            - "Can you chart the progress of release RM-12345?"
+                            - "Can you chart the progress of release issue 12345?"
                             - "Generate a chart showing the number of open issues by priority."
 
                     ## RESPONSE STRATEGY:

@@ -161,43 +161,35 @@ class JiraService(MCPToolBase):
                 matches = [r for r in rows if self._jql_match(r, jql)]
 
                 # Format response in JIRA-like structure
-                issues = []
+                result = []
                 for r in matches:
                     # Create a copy of the row to avoid modifying the original
-                    issue_fields = {}
+                    issue = {}
 
                     # Process each field, converting JSON strings to objects where appropriate
                     for field_name, field_value in r.items():
                         if field_value is None:
-                            issue_fields[field_name] = ""
+                            issue[field_name] = ""
                         elif field_name.lower() == "discussion" or field_name.lower() == "linked_issues":
                             # Try to parse JSON strings for known array/object fields
                             try:
                                 if isinstance(field_value, str) and field_value.strip():
                                     if (field_value.startswith('[') and field_value.endswith(']')) or \
                                     (field_value.startswith('{') and field_value.endswith('}')):
-                                        issue_fields[field_name] = json.loads(field_value)
+                                        issue[field_name] = json.loads(field_value)
                                     else:
-                                        issue_fields[field_name] = field_value
+                                        issue[field_name] = field_value
                                 else:
-                                    issue_fields[field_name] = field_value
+                                    issue[field_name] = field_value
                             except json.JSONDecodeError:
                                 # Keep as string if JSON parsing fails
-                                issue_fields[field_name] = field_value
+                                issue[field_name] = field_value
                         else:
-                            issue_fields[field_name] = field_value
+                            issue[field_name] = field_value
+                    result.append(issue)
 
-                    # Create the issue object with id, key and fields
-                    issue = {
-                        "id": r.get("id"),
-                        "key": r.get("key") or f"ISSUE-{r.get('id')}",
-                        "fields": issue_fields
-                    }
-
-                    issues.append(issue)
-
-                self.logger.info(f"Request processed successfully. Total issues: {len(issues)}")
-                return {"total": len(issues), "issues": issues}
+                self.logger.info(f"Request processed successfully. Total issues: {len(result)}")
+                return {"total": len(result), "issues": result}
             except Exception as e:
                 self.logger.error(f"Error in search_issues: {str(e)}")
                 return {"error": str(e), "total": 0, "issues": []}

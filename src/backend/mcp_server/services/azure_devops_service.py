@@ -133,14 +133,14 @@ class AzureDevopsService(MCPToolBase):
             try:
                 rows, _ = self._load_work_items()
                 
-                # Find the work item by ID
+                # Find the work item by ID - check both WORK_ITEM_ID and ISSUE_ID
                 for row in rows:
-                    if str(row.get("WORK_ITEM_ID", "")) == str(work_item_id):
-                        self.logger.info(f"Found work item {work_item_id}")
-                        return {
-                            "id": row.get("WORK_ITEM_ID"),
-                            "fields": row
-                        }
+                    work_item_id_str = str(row.get("WORK_ITEM_ID", ""))
+                    issue_id_str = str(row.get("ISSUE_ID", ""))
+                    
+                    if work_item_id_str == str(work_item_id) or issue_id_str == str(work_item_id):
+                        self.logger.info(f"Found work item {work_item_id} (WORK_ITEM_ID: {work_item_id_str}, ISSUE_ID: {issue_id_str})")
+                        return row  # Return the row data directly like Jira service
                 
                 # Work item not found
                 self.logger.warning(f"Work item {work_item_id} not found")
@@ -180,13 +180,13 @@ class AzureDevopsService(MCPToolBase):
                 # Convert work_item_ids to strings for comparison
                 target_ids = [str(wid) for wid in work_item_ids]
                 
-                # Find matching work items
+                # Find matching work items - check both WORK_ITEM_ID and ISSUE_ID
                 for row in rows:
-                    if str(row.get("WORK_ITEM_ID", "")) in target_ids:
-                        work_items.append({
-                            "id": row.get("WORK_ITEM_ID"),
-                            "fields": row
-                        })
+                    work_item_id_str = str(row.get("WORK_ITEM_ID", ""))
+                    issue_id_str = str(row.get("ISSUE_ID", ""))
+                    
+                    if work_item_id_str in target_ids or issue_id_str in target_ids:
+                        work_items.append(row)  # Return the row data directly like Jira service
                 
                 self.logger.info(f"Found {len(work_items)} work items out of {len(work_item_ids)} requested")
                 return work_items
@@ -374,10 +374,7 @@ class AzureDevopsService(MCPToolBase):
                 # Filter by release
                 for row in rows:
                     if row.get("RELEASE", "") == release:
-                        work_items.append({
-                            "id": row.get("WORK_ITEM_ID"),
-                            "fields": row
-                        })
+                        work_items.append(row)  # Return the row data directly like Jira service
                 
                 self.logger.info(f"Found {len(work_items)} work items for release {release}")
                 return work_items
@@ -436,10 +433,7 @@ class AzureDevopsService(MCPToolBase):
                         
                         # Include if check-in date is on or after target date
                         if check_in_date >= target_date:
-                            work_items.append({
-                                "id": row.get("WORK_ITEM_ID"),
-                                "fields": row
-                            })
+                            work_items.append(row)  # Return the row data directly like Jira service
                     except (ValueError, IndexError):
                         # Skip invalid date formats
                         continue
@@ -471,7 +465,7 @@ class AzureDevopsService(MCPToolBase):
     @property
     def tool_count(self) -> int:
         """Return the number of tools provided by this service."""
-        return 9
+        return 10
 
     def _load_work_items(self) -> tuple:
         """
@@ -607,3 +601,66 @@ class AzureDevopsService(MCPToolBase):
         except Exception as e:
             self.logger.error(f"Error saving work items to CSV: {str(e)}")
             raise
+
+    def _infer_type(self, value):
+        """Simple type inference for field values"""
+        if value is None or value == '':
+            return "string"
+        try:
+            int(value)
+            return "number"
+        except:
+            pass
+        try:
+            float(value)
+            return "number"
+        except:
+            pass
+        # Check if it looks like a date
+        if "/" in str(value) and any(char.isdigit() for char in str(value)):
+            return "datetime"
+        return "string"
+
+    def _get_display_name(self, field_name):
+        """
+        Convert technical field names to user-friendly display names.
+
+        Args:
+            field_name: The technical field name
+
+        Returns:
+            A user-friendly display name
+        """
+        display_names = {
+            "ISSUE_ID": "Issue ID",
+            "STREAM_NAME": "Project/Stream Name",
+            "RELEASE": "Release Version",
+            "WORK_ITEM_ID": "Work Item ID",
+            "WORK_ITEM_STATUS": "Work Item Status", 
+            "COMMIT_ID": "Commit ID",
+            "CHECK_IN_DATE": "Check-in Date"
+        }
+        
+        return display_names.get(field_name, field_name.replace("_", " ").title())
+
+    def _get_field_description(self, field_name):
+        """
+        Get detailed description for Azure DevOps work item fields.
+
+        Args:
+            field_name: The field name
+
+        Returns:
+            A detailed description of the field
+        """
+        descriptions = {
+            "ISSUE_ID": "Unique identifier for the issue record in the tracking system",
+            "STREAM_NAME": "Name of the project or development stream (e.g., APP-Analytics, Platform-ServiceFramework)",
+            "RELEASE": "Version number of the release (e.g., 4.0.0.4000, 1.0.0.1000)",
+            "WORK_ITEM_ID": "Unique identifier for the work item in Azure DevOps",
+            "WORK_ITEM_STATUS": "Current status of the work item (New, Active, In Review, Completed, Checked in)",
+            "COMMIT_ID": "Git commit identifier associated with the work item (if checked in)",
+            "CHECK_IN_DATE": "Date and time when the work item was checked in or completed"
+        }
+        
+        return descriptions.get(field_name, f"Field for {field_name.lower().replace('_', ' ')}")

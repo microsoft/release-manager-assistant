@@ -17,7 +17,7 @@ from typing import List, Dict, Any
 
 from agent_framework import MCPStdioTool, AIFunction
 
-from backend.services.orchestrator.models.devops_mcp_settings import DevOpsMcpSettings
+from models.devops_mcp_settings import DevOpsMcpSettings
 from common.telemetry.app_logger import AppLogger
 
 

@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from agent_framework.azure import AzureAIAgentClient, AzureOpenAIResponsesClient
 
 from models.agents import Agent
+from models.devops_settings import DevOpsSettings
 from models.jira_settings import JiraSettings
-from plugins.az_devops_plugin import AzDevOpsPluginFactory
 
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.configuration.agent_config import (
@@ -30,7 +30,7 @@ class AgentCreationContext:
     """Context object containing all necessary information for agent creation."""
     configuration: Union[AzureAIAgentConfig, AzureOpenAIResponsesAgentConfig]
     jira_settings: Optional[JiraSettings] = None
-    mcp_plugin_factory: Optional[AzDevOpsPluginFactory] = None
+    devops_settings: Optional[DevOpsSettings] = None
 
 
 class ReleaseManagerAgentFactory:
@@ -127,7 +127,7 @@ class ReleaseManagerAgentFactory:
         context = AgentCreationContext(
             configuration=configuration,
             jira_settings=kwargs.get('jira_settings'),
-            mcp_plugin_factory=kwargs.get('mcp_plugin_factory')
+            devops_settings=kwargs.get('devops_settings')
         )
 
         if context.configuration is AzureAIAgentConfig and not self.foundry_client:
@@ -189,8 +189,11 @@ class ReleaseManagerAgentFactory:
 
     async def _create_azure_devops_agent(self, context: AgentCreationContext) -> AzureDevOpsAgent:
         """Create a new instance of AzureDevOpsAgent with MCP server integration."""
-        if not context.mcp_plugin_factory:
-            raise ValueError("mcp_plugin_factory is required for Azure DevOps agent")
+        if not context.devops_settings:
+            raise ValueError("devops_settings is required for Azure DevOps agent")
+        
+        if not context.devops_settings.use_mcp_server and not context.devops_settings.mcp_plugin_factory:
+            raise ValueError("Either use_mcp_server or mcp_plugin_factory must be set for Azure DevOps agent")
 
         try:
             async with self._lock:
@@ -198,7 +201,9 @@ class ReleaseManagerAgentFactory:
                 await azure_devops_agent.initialize(
                     client=self.azure_openai_responses_client,
                     configuration=context.configuration,
-                    mcp_plugin_factory=context.mcp_plugin_factory
+                    use_mcp_server=context.devops_settings.use_mcp_server,
+                    mcp_server_endpoint=context.devops_settings.mcp_server_endpoint,
+                    mcp_plugin_factory=context.devops_settings.mcp_plugin_factory
                 )
 
             self.logger.info("Created new Azure DevOps agent instance with MCP integration")

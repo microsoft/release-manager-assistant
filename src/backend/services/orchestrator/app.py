@@ -63,11 +63,14 @@ orchestrators = ThreadSafeCache[AgentOrchestrator](logger)
 # Global MCP plugin factory for Azure DevOps
 mcp_plugin_factory = None
 
+# Load configuration based on MCP server settings
 default_runtime_config = load_file(
     os.path.join(
         os.path.dirname(__file__),
         "static",
-        "release_manager_config.yaml",
+        "release_manager_with_mcp_server_config.yaml"
+        if DefaultConfig.USE_JIRA_MCP_SERVER and DefaultConfig.USE_AZURE_DEVOPS_MCP_SERVER
+        else "release_manager_config.yaml",
     ),
     "yaml",
 )

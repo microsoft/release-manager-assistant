@@ -67,6 +67,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
     name: skuName
   }
   kind: kind
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     accessTier: accessTier
     allowBlobPublicAccess: allowBlobPublicAccess

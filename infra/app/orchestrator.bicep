@@ -153,18 +153,20 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
           value: openaiEmbeddingDeploymentName
         }
         {
+          name: 'storage-account-key'
+          value: storageAccountKey
+        }
+      ], !empty(azureDevOpsOrgName) ? [
+        {
           name: 'azure-devops-org-name'
           value: azureDevOpsOrgName
         }
+      ] : [], !empty(azureDevOpsExtPat) ? [
         {
           name: 'azure-devops-ext-pat'
           value: azureDevOpsExtPat
         }
-        {
-          name: 'storage-account-key'
-          value: storageAccountKey
-        }
-      ], !empty(azureDevOpsMcpServerEndpoint) ? [
+      ]: [], !empty(azureDevOpsMcpServerEndpoint) ? [
         {
           name: 'azure-devops-mcp-server-endpoint'
           value: azureDevOpsMcpServerEndpoint
@@ -276,7 +278,17 @@ resource orchestratorApp 'Microsoft.App/containerApps@2023-05-01' = {
               name: 'USE_AZURE_DEVOPS_MCP_SERVER'
               value: string(useAzureDevOpsMcpServer)
             }
-          ], !empty(azureDevOpsMcpServerEndpoint) ? [
+          ], !empty(azureDevOpsOrgName) ? [
+            {
+              name: 'AZURE-DEVOPS-ORG-NAME'
+              value: azureDevOpsOrgName
+            }
+          ] : [], !empty(azureDevOpsExtPat) ? [
+            {
+              name: 'AZURE-DEVOPS-EXT-PAT'
+              value: azureDevOpsExtPat
+            }
+          ] : [], !empty(azureDevOpsMcpServerEndpoint) ? [
             {
               name: 'AZURE-DEVOPS-MCP-SERVER-ENDPOINT'
               value: azureDevOpsMcpServerEndpoint

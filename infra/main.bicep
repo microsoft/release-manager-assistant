@@ -312,6 +312,19 @@ module staticWebApp './app/frontend.bicep' = {
   ]
 }
 
+// Create Network Security Perimeter with Key Vault and Storage Account associations
+module networkSecurityPerimeter './core/networking/networksecurityparameter.bicep' = {
+  name: 'network-security-perimeter'
+  scope: rg
+  params: {
+    location: location
+    nspName: 'nsp-${resourceToken}'
+    profileName: 'nsp-profile-${resourceToken}'
+    keyVaultResourceId: keyVault.outputs.resourceId
+    storageAccountResourceId: storage.outputs.resourceId
+  }
+}
+
 // Outputs
 @secure()
 output AZURE_LOCATION string = location

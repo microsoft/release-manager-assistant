@@ -2,7 +2,6 @@
 # Licensed under the MIT license.
 
 import json
-import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -16,7 +15,7 @@ from agent_framework.azure import AzureOpenAIResponsesClient
 from agent_framework_azure_ai import AzureAIAgentClient
 from agents.agent_factory import ReleaseManagerAgentFactory
 from azure.ai.projects.aio import AIProjectClient
-from azure.ai.agents.models import AgentThread as FoundryAgentThread, MessageRole as FoundryMessageRole
+from azure.ai.agents.models import AgentThread as FoundryAgentThread
 from azure.core.exceptions import HttpResponseError
 from azure.identity.aio import DefaultAzureCredential as AsyncDefaultAzureCredential
 from azure.identity import DefaultAzureCredential
@@ -38,8 +37,6 @@ from common.contracts.configuration.agent_config import (
     AzureOpenAIResponsesAgentConfig,
     AzureAIAgentConfig
 )
-
-LOCAL_VISUALIZATION_DATA_DIR = "visualization"
 
 # Initialize the update messages to be displayed to the user
 update_messages = [
@@ -198,9 +195,9 @@ class AgentOrchestrator:
             session_thread_id=session_thread.id
         )
 
-        # 4. VISUALIZATION AGENT SETUP
-        self.agent_runtime_config_map[Agent.VISUALIZATION_AGENT] = await self.__create_agent(
-            agent=Agent.VISUALIZATION_AGENT,
+        # 4. FINAL ANSWER GENERATOR AGENT SETUP
+        self.agent_runtime_config_map[Agent.FINAL_ANSWER_GENERATOR_AGENT] = await self.__create_agent(
+            agent=Agent.FINAL_ANSWER_GENERATOR_AGENT,
             session_thread_id=session_thread.id,
         )
 
@@ -245,48 +242,6 @@ class AgentOrchestrator:
         parsed_response = await self.__parse_planner_agent_response(planner_agent_response)
         return parsed_response
 
-    async def __generate_visualization_data(self, thread_id: str, dialog_id: str) -> List[str]:
-        visualization_image_sas_urls = []
-
-        try:
-            messages = await self.foundry_client.project_client.agents.messages.get_last_message_by_role(
-                thread_id=thread_id,
-                role=FoundryMessageRole.AGENT
-            )
-
-            if len(messages.image_contents) > 0:
-                await self.message_handler.send_update(update_message="Generating visualization...", dialog_id=dialog_id)
-
-            for image_content in messages.image_contents:
-                try:
-                    self.logger.info(f"Image File ID: {image_content.image_file.file_id}")
-                    file_name = f"{image_content.image_file.file_id}_image_file.png"
-
-                    # Save the image file to the target directory
-                    await self.foundry_client.project_client.agents.files.save(
-                        file_id=image_content.image_file.file_id,
-                        file_name=file_name,
-                        target_dir=LOCAL_VISUALIZATION_DATA_DIR,
-                    )
-
-                    # Upload image file to storage and get the URL
-                    image_url = await self.blob_store_helper.upload_file_from_path_and_get_sas_url(
-                        local_file_path=os.path.join(LOCAL_VISUALIZATION_DATA_DIR, file_name),
-                        blob_name=file_name,
-                    )
-                    visualization_image_sas_urls.append(image_url)
-                except Exception as e:
-                    self.logger.exception(f"Error processing image file ID {image_content.image_file.file_id}: {e}. Skipping this file.")
-                    continue  # Continue to the next file if an error occurs
-        except Exception as e:
-            self.logger.exception(f"Error generating visualization data: {e}. Skipping...")
-            return []
-
-        self.logger.info(f"Visualization data generated successfully with {len(visualization_image_sas_urls)} image(s).")
-        await self.message_handler.send_update(update_message="Successfully generated visualization data. Almost there..", dialog_id=dialog_id)
-
-        return visualization_image_sas_urls
-
     async def start_agent_workflow(self, request: Request) -> Response:
         """
         Start the agent workflow by invoking the JIRA and Azure DevOps agents, and generating visualization data.
@@ -325,64 +280,50 @@ class AgentOrchestrator:
                     )
 
                     fallback_response = await self.__invoke_agent(Agent.FALLBACK_AGENT, message)
-                    return Response(
-                        session_id=request.session_id,
-                        dialog_id=request.dialog_id,
-                        user_id=request.user_id,
-                        answer=Answer(
-                            answer_string=fallback_response.text,
-                            is_final=True,
-                            data_points=[],
-                            speaker_locale=request.locale,
-                        ),
-                    )
+                    return self.generate_final_response(request, fallback_response.text)
 
                 self.logger.info(f"Orchestration Plan generated successfully: {plan}")
+                await self.message_handler.send_update(
+                    "Plan generated. Starting Agent orchestration..",
+                    dialog_id=request.dialog_id
+                )
 
-                intermediate_context = ""
                 visualization_image_sas_urls: list[str] = []
+                final_answer = ""
 
-                # Iterate through the agents in the plan and invoke them
+                # Iterate through the agents in the plan and invoke them.
                 for agent_name in plan["agents"]:
                     agent = Agent(agent_name)
-
                     if agent not in self.agent_runtime_config_map:
                         raise ValueError(f"Agent {agent} not found in configuration.")
 
-                    # Invoke the agent with the plan
-                    agent_response = await self.__invoke_agent(
-                        agent=agent,
-                        messages=self.chat_history,
-                    )
-                    self.logger.info(f"Agent {agent.name} response: {agent_response}")
+                    # Invoke the agent
+                    agent_response = await self.__invoke_agent(agent, self.chat_history)
+                    self.logger.info(f"Agent {agent.name}\nResponse: {agent_response.text}")
 
-                    # Visualization Agent responds with visualization data in the form of file IDs
-                    # If the agent is the Visualization Agent, handle the response accordingly.
-                    if agent == Agent.VISUALIZATION_AGENT:
-                        visualization_image_sas_urls = await self.__generate_visualization_data(
-                            thread_id=self.agent_runtime_config_map.get(agent).agent_thread.service_thread_id,
+                    # Update the chat history with the final response
+                    self.chat_history.append(ChatMessage(role=Role.ASSISTANT, text=agent_response.text))
+
+                    # Generate Visualization Data if final answer is generated.
+                    if agent == Agent.FINAL_ANSWER_GENERATOR_AGENT:
+                        final_answer = agent_response
+                        final_answer_agent_config = self.agent_runtime_config_map.get(agent)
+                        if not final_answer_agent_config:
+                            self.logger.error(f"Final Answer Generator Agent config not found.")
+                            continue
+
+                        visualization_image_sas_urls = await final_answer_agent_config.agent.generate_visualization_data(
+                            project_client=self.foundry_client.project_client,
+                            blob_store_helper=self.blob_store_helper,
+                            message_handler=self.message_handler,
+                            thread_id=final_answer_agent_config.agent_thread.service_thread_id,
                             dialog_id=request.dialog_id
                         )
-                    else:
-                        # Clean up the response to remove any unwanted characters
-                        clean_agent_response = agent_response.text.replace("\n", "").replace("\r", "")
 
-                        # Pass full clean context to next agent
-                        intermediate_context += f"{clean_agent_response}\n\n"
-
-                # Update the chat history with the final response
-                self.chat_history.append(intermediate_context)
-
-                return Response(
-                    session_id=request.session_id,
-                    dialog_id=request.dialog_id,
-                    user_id=request.user_id,
-                    answer=Answer(
-                        answer_string=intermediate_context,
-                        is_final=True,
-                        data_points=(visualization_image_sas_urls if visualization_image_sas_urls else []),
-                        speaker_locale=request.locale,
-                    ),
+                return self.generate_final_response(
+                    request=request,
+                    final_answer_str=final_answer,
+                    data_points=visualization_image_sas_urls
                 )
             except HttpResponseError as http_error:
                 self.logger.exception(f"HTTP error during agent invocation: {http_error}")
@@ -393,3 +334,21 @@ class AgentOrchestrator:
         except Exception as e:
             self.logger.exception(f"Exception occurred while orchestrating agents: {e}")
             raise
+
+    def generate_final_response(
+        self,
+        request: Request,
+        final_answer_str: str,
+        data_points: Optional[list[str]] = []
+    ) -> Response:
+        return Response(
+            session_id=request.session_id,
+            dialog_id=request.dialog_id,
+            user_id=request.user_id,
+            answer=Answer(
+                answer_string=final_answer_str,
+                is_final=True,
+                data_points=data_points,
+                speaker_locale=request.locale,
+            )
+        )

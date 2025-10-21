@@ -3,7 +3,7 @@
 
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 from agent_framework import (
@@ -211,41 +211,6 @@ class AgentOrchestrator:
             session_thread_id=session_thread.id,
         )
 
-    async def __parse_planner_agent_response(self, planner_agent_response: AgentRunResponse) -> Dict[str, Any]:
-        """
-        Parse the planner agent response to extract the plan.
-        """
-        try:
-            response_dict = json.loads(planner_agent_response.text)
-
-            return {
-                "plan_id": response_dict.get("plan_id"),
-                "agents": response_dict.get("agents", []),
-                "justification": response_dict.get("justification", "").strip(),
-            }
-        except json.JSONDecodeError as e:
-            self.logger.exception(f"Failed to parse planner agent response as JSON: {e}")
-            raise ValueError("Invalid JSON response from planner agent.")
-
-    async def __execute_planner(
-        self,
-        messages: Optional[str | ChatMessage | List[str | ChatMessage]]
-    ) -> Dict[str, Any]:
-        """
-        Execute the planner agent with the provided messages.
-
-        If no message(s) provided, entire chat history is used instead.
-        """
-        self.logger.info("Executing Planner Agent to generate orchestration plan...")
-
-        planner_agent_response = await self.__invoke_agent(
-            agent=Agent.PLANNER_AGENT,
-            messages=messages if messages is not None else self.chat_history,
-        )
-
-        parsed_response = await self.__parse_planner_agent_response(planner_agent_response)
-        return parsed_response
-
     async def start_agent_workflow(self, request: Request) -> Response:
         """
         Start the agent workflow by invoking the JIRA and Azure DevOps agents, and generating visualization data.
@@ -294,20 +259,21 @@ class AgentOrchestrator:
 
                 # Iterate through the agents in the plan and invoke them.
                 for agent_name in plan.agents:
+
                     agent = Agent(agent_name)
                     if agent not in self.agent_runtime_config_map:
                         raise ValueError(f"Agent {agent} not found in configuration.")
 
                     # Invoke the agent
                     agent_response = await self.__invoke_agent(agent, self.chat_history)
-                    self.logger.info(f"Agent {agent.name}\nResponse: {agent_response.text}")
+                    self.logger.info(f"Agent {agent.name} response received.")
 
                     # Update the chat history with the final response
                     self.chat_history.append(ChatMessage(role=Role.ASSISTANT, text=agent_response.text))
 
                     # Generate Visualization Data if final answer is generated.
                     if agent == Agent.FINAL_ANSWER_GENERATOR_AGENT:
-                        final_answer = agent_response
+                        final_answer = agent_response.text
                         final_answer_agent_config = self.agent_runtime_config_map.get(agent)
                         if not final_answer_agent_config:
                             self.logger.error(f"Final Answer Generator Agent config not found.")

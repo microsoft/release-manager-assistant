@@ -194,6 +194,7 @@ class AgentBase(ABC):
 
         self._logger.info(
             f"Agent response received:\n"
+            f"  Name: {self._agent.name}\n"
             f"  Created At: {agent_response.created_at}\n"
             f"  Response ID: {agent_response.response_id}\n"
             f"  Response: {agent_response}\n"

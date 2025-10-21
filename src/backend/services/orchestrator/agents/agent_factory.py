@@ -22,7 +22,7 @@ from .azure_devops_agent import AzureDevOpsAgent
 from .fallback_agent import FallbackAgent
 from .jira_agent import JiraAgent
 from .planner_agent import PlannerAgent
-from .visualization_agent import VisualizationAgent
+from .final_answer_generator_agent import FinalAnswerGeneratorAgent
 
 
 @dataclass
@@ -55,7 +55,7 @@ class ReleaseManagerAgentFactory:
     def _setup_agent_creators(self):
         """Setup the agent creation registry mapping."""
         self._agent_creators = {
-            Agent.VISUALIZATION_AGENT: self._create_visualization_agent,
+            Agent.FINAL_ANSWER_GENERATOR_AGENT: self._create_final_answer_generator_agent,
             Agent.PLANNER_AGENT: self._create_planner_agent,
             Agent.JIRA_AGENT: self._create_jira_agent,
             Agent.AZURE_DEVOPS_AGENT: self._create_azure_devops_agent,
@@ -143,17 +143,17 @@ class ReleaseManagerAgentFactory:
             self.logger.error(f"Failed to create {agent_type.value}: {str(e)}")
             raise
 
-    async def _create_visualization_agent(self, context: AgentCreationContext) -> VisualizationAgent:
-        """Create the Visualization Agent (singleton)."""
+    async def _create_final_answer_generator_agent(self, context: AgentCreationContext) -> FinalAnswerGeneratorAgent:
+        """Create the Final Answer Generator Agent (singleton)."""
         async with self._lock:
-            visualization_agent = await VisualizationAgent.get_instance(self.logger)
-            await visualization_agent.initialize(
+            final_answer_generator_agent = await FinalAnswerGeneratorAgent.get_instance(self.logger)
+            await final_answer_generator_agent.initialize(
                 client=self.foundry_client,
                 configuration=context.configuration
             )
 
-        self.logger.info("Visualization Agent initialized or retrieved.")
-        return visualization_agent
+        self.logger.info("Final Answer Generator Agent initialized or retrieved.")
+        return final_answer_generator_agent
 
     async def _create_planner_agent(self, context: AgentCreationContext) -> PlannerAgent:
         """Create a new instance of PlannerAgent."""

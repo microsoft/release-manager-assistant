@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+from pydantic import BaseModel
+
 from agent_framework import ChatAgent
 from agent_framework_azure_ai import AzureAIAgentClient
 
@@ -8,6 +10,10 @@ from common.telemetry.app_logger import AppLogger
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.configuration.agent_config import AzureAIAgentConfig
 
+class PlannerAgentResponse(BaseModel):
+    plan_id: str
+    agents: list[str]
+    justification: str
 
 class PlannerAgent(AgentBase):
     """

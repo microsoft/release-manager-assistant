@@ -79,35 +79,38 @@ class FinalAnswerGeneratorAgent(AgentBase):
                 role=FoundryMessageRole.AGENT
             )
 
-            if len(last_message.image_contents) > 0:
-                await message_handler.send_update(update_message="Generating visualization...", dialog_id=dialog_id)
+            if len(last_message.image_contents) == 0:
+                self._logger.info("No images found for visualization.")
+                return []
 
-                for image_content in last_message.image_contents:
-                    try:
-                        self._logger.info(f"Image File ID: {image_content.image_file.file_id}")
-                        file_name = f"{image_content.image_file.file_id}_image_file.png"
+            await message_handler.send_update(update_message="Generating visualization...", dialog_id=dialog_id)
 
-                        # Save the image file to the target directory
-                        await project_client.agents.files.save(
-                            file_id=image_content.image_file.file_id,
-                            file_name=file_name,
-                            target_dir=LOCAL_VISUALIZATION_DATA_DIR,
-                        )
+            for image_content in last_message.image_contents:
+                try:
+                    self._logger.info(f"Image File ID: {image_content.image_file.file_id}")
+                    file_name = f"{image_content.image_file.file_id}_image_file.png"
 
-                        # Upload image file to storage and get the URL
-                        image_url = await blob_store_helper.upload_file_from_path_and_get_sas_url(
-                            local_file_path=os.path.join(LOCAL_VISUALIZATION_DATA_DIR, file_name),
-                            blob_name=file_name,
-                        )
-                        visualization_image_sas_urls.append(image_url)
-                    except Exception as e:
-                        self._logger.exception(f"Error processing image file ID {image_content.image_file.file_id}: {e}. Skipping this file.")
-                        continue  # Continue to the next file if an error occurs
-                
-                self._logger.info(f"Visualization data generated successfully with {len(visualization_image_sas_urls)} image(s).")
-                await message_handler.send_update(update_message="Successfully generated visualization data. Almost there..", dialog_id=dialog_id)
-                return visualization_image_sas_urls
-            
+                    # Save the image file to the target directory
+                    await project_client.agents.files.save(
+                        file_id=image_content.image_file.file_id,
+                        file_name=file_name,
+                        target_dir=LOCAL_VISUALIZATION_DATA_DIR,
+                    )
+
+                    # Upload image file to storage and get the URL
+                    image_url = await blob_store_helper.upload_file_from_path_and_get_sas_url(
+                        local_file_path=os.path.join(LOCAL_VISUALIZATION_DATA_DIR, file_name),
+                        blob_name=file_name,
+                    )
+                    visualization_image_sas_urls.append(image_url)
+                except Exception as e:
+                    self._logger.exception(f"Error processing image file ID {image_content.image_file.file_id}: {e}. Skipping this file.")
+                    continue  # Continue to the next file if an error occurs
+
+            self._logger.info(f"Visualization data generated successfully with {len(visualization_image_sas_urls)} image(s).")
+            await message_handler.send_update(update_message="Successfully generated visualization data. Almost there..", dialog_id=dialog_id)
+            return visualization_image_sas_urls
+
         except Exception as e:
             self._logger.exception(f"Error generating visualization data: {e}. Skipping...")
             return []

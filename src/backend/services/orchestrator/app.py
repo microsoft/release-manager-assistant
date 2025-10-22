@@ -152,7 +152,7 @@ async def run_agent_orchestration(request_payload: str, message_handler: RedisMe
         # Invoke agent workflow
         response = await agent_orchestrator.start_agent_workflow(orchestrator_request)
 
-        logger.info(f"Orchestration completed for session {orchestrator_request.session_id} with response: {response.model_dump_json()}")
+        logger.info(f"Agent Orchestration completed successfully for session {orchestrator_request.session_id}.")
         await message_handler.send_final_response(response)
     except Exception as e:
         logger.exception(f"Exception in /run_agent_orchestration: {e}")

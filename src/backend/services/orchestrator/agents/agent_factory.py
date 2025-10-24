@@ -160,7 +160,7 @@ class ReleaseManagerAgentFactory:
         async with self._lock:
             planner_agent = await PlannerAgent.get_instance(self.logger)
             await planner_agent.initialize(
-                client=self.foundry_client,
+                client=self.azure_openai_responses_client,
                 configuration=context.configuration
             )
 
@@ -191,7 +191,7 @@ class ReleaseManagerAgentFactory:
         """Create a new instance of AzureDevOpsAgent with MCP server integration."""
         if not context.devops_settings:
             raise ValueError("devops_settings is required for Azure DevOps agent")
-        
+
         if not context.devops_settings.use_mcp_server and not context.devops_settings.mcp_plugin_factory:
             raise ValueError("Either use_mcp_server or mcp_plugin_factory must be set for Azure DevOps agent")
 
@@ -219,7 +219,7 @@ class ReleaseManagerAgentFactory:
         """Create a new instance of FallbackAgent."""
         async with self._lock:
             fallback_agent = await FallbackAgent.get_instance(logger=self.logger)
-            await fallback_agent.initialize(client=self.foundry_client, configuration=context.configuration)
+            await fallback_agent.initialize(client=self.azure_openai_responses_client, configuration=context.configuration)
 
         self.logger.info("Created new Fallback agent instance")
         return fallback_agent

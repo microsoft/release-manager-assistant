@@ -232,7 +232,7 @@ agent_configs:
 
   planner_agent:
     config_body:
-      type: AzureAIAgentConfig
+      type: AzureOpenAIResponsesAgentConfig
       agent_name: PLANNER_AGENT
       instructions: |
                     """
@@ -280,14 +280,11 @@ agent_configs:
                       "justification": "<justification>"
                     }
                     ```
-
-                    ## MEMORY CONTEXT:
-                    {memory_context}
                     """
 
   fallback_agent:
     config_body:
-      type: AzureAIAgentConfig
+      type: AzureOpenAIResponsesAgentConfig
       agent_name: FALLBACK_AGENT
       instructions: |
                     """

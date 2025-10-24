@@ -2,11 +2,11 @@
 # Licensed under the MIT license.
 
 from agent_framework import ChatAgent
-from agent_framework_azure_ai import AzureAIAgentClient
+from agent_framework.azure import AzureOpenAIResponsesClient
 
 from common.telemetry.app_logger import AppLogger
 from common.agent_factory.agent_base import AgentBase
-from common.contracts.configuration.agent_config import AzureAIAgentConfig
+from common.contracts.configuration.agent_config import AzureOpenAIResponsesAgentConfig
 
 
 class FallbackAgent(AgentBase):
@@ -21,8 +21,8 @@ class FallbackAgent(AgentBase):
 
     async def create_agent(
         self,
-        client: AzureAIAgentClient,
-        configuration: AzureAIAgentConfig,
+        client: AzureOpenAIResponsesClient,
+        configuration: AzureOpenAIResponsesAgentConfig,
         **kwargs,
     ) -> ChatAgent:
         """

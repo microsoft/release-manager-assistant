@@ -4,11 +4,11 @@
 from pydantic import BaseModel
 
 from agent_framework import ChatAgent
-from agent_framework_azure_ai import AzureAIAgentClient
+from agent_framework.azure import AzureOpenAIResponsesClient
 
 from common.telemetry.app_logger import AppLogger
 from common.agent_factory.agent_base import AgentBase
-from common.contracts.configuration.agent_config import AzureAIAgentConfig
+from common.contracts.configuration.agent_config import AzureOpenAIResponsesAgentConfig
 
 class PlannerAgentResponse(BaseModel):
     plan_id: str
@@ -26,15 +26,15 @@ class PlannerAgent(AgentBase):
 
     async def create_agent(
         self,
-        client: AzureAIAgentClient,
-        configuration: AzureAIAgentConfig
+        client: AzureOpenAIResponsesClient,
+        configuration: AzureOpenAIResponsesAgentConfig
     ) -> ChatAgent:
         """
         Create the actual Planner agent in AI Foundry.
 
         Args:
             client: The Azure Responses client for creating agents
-            configuration: Agent configuration containing Azure AI agent settings
+            configuration: Agent configuration containing Azure Responses agent settings
 
         Returns:
             The created AI Foundry agent

@@ -7,6 +7,13 @@ param environmentName string
 
 @minLength(1)
 @description('Primary location for all resources')
+@allowed([
+  'eastus2'
+  'westus2'
+  'centralus'
+  'westeurope'
+  'eastasia'
+])
 param location string
 
 @description('The image name for the session manager service')

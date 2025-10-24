@@ -1,6 +1,6 @@
 {
     "name": "Release Manager Container",
-    "image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12-bullseye",
     "forwardPorts": [3000, 5000, 5002, 6379],
     "features": {
         "ghcr.io/devcontainers/features/node:1": {

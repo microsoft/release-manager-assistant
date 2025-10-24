@@ -220,6 +220,10 @@ These scripts handle the entire deployment process including:
 If you prefer more control over the deployment process:
 
 ```bash
+# 1. Set environment variables
+# Make sure all required environment variables are loaded before deployment. (see `env.template` for required variables)
+
+# 2. Deploy to Azure
 azd up
 
 # This command will:
@@ -252,7 +256,7 @@ The deployment process will show progress for:
    - Session Manager deployment (WebSocket management)
    - Redis container deployment
 
-### Step 3: Verify Deployment [OPTIONAL]
+### Step 3: Verify Deployment
 
 ```bash
 # Check deployment status

@@ -9,18 +9,14 @@
 
 <div align="center">
 
-[**SOLUTION OVERVIEW**](#solution-overview) \| [**GETTING STARTED**](#getting_started) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
+[**SOLUTION OVERVIEW**](#solution-overview) \| [**GETTING STARTED**](#getting-started) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
 
 </div>
 <br/>
 
-<h2>
-SOLUTION OVERVIEW
-</h2>
+## SOLUTION OVERVIEW
 
 In modern software development, **Release Managers** play a pivotal role bridging the gap between development and operations. As the orchestrators of software deployment, they ensure that releases are timely, efficient, and risk-mitigated. However, increasing complexity and fragmentation across systems have made this role more challenging than ever.
-
-The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
 The **Release Manager Assistant (RMA)** is a solution accelerator designed to augment release managers with AI-driven intelligence, multi-system integration, and real-time decision support. It simplifies the release lifecycle from planning to post-deployment analysis, all through a unified and contextual interface.
 
@@ -44,34 +40,35 @@ The architecture is built on a modular and secure AI-native design leveraging:
 
 ---
 
-## Getting Started
+## GETTING STARTED
 
 > **Note**: This solution accelerator is designed to be highly adaptable. You can customize integrations, agent behaviors, and workflows based on your internal tooling landscape and organizational needs.
-
-For detailed setup instructions, please follow the guide here: [SETUP INSTRUCTIONS](DEPLOYMENT.md)
 
 ### Prerequisites
 
 - **Azure Subscription** with appropriate permissions
-- **Access to Azure OpenAI and Azure AI Foundry** services
-- **Local/Cloud instance for JIRA** with API access and custom field configuration
-- **Azure DevOps organization access** with work item, build, and release permissions
+- **Access to Azure OpenAI and Azure AI Foundry** services (⚠️REQUIRED⚠️ - *we only support BYOAI scenarios currently due to resource quota issues*)
+- **Local/Cloud instance for JIRA** with API access and custom field configuration (*Optional - MCP Server with synthetic Jira data is included*)
+- **Azure DevOps organization access** with work item, build, and release permissions (*Optional - MCP Server with synthetic Azure DevOps data is included*)
 - **Node.js 20+** (required for Azure DevOps MCP Server)
-- **Python >= 3.12** for agent runtime
+- **Python == 3.12** for agent runtime
 - **Docker runtime** for running service containers locally.
 - **Visual Studio Code** with Python extension (recommended for development)
 
-### Quick Start Options
+> ⚠️ **IMPORTANT** To leverage MCP server with synthetic data, ensure `USE_JIRA_MCP_SERVER` and `USE_AZURE_DEVOPS_MCP_SERVER` are set to `true` as environment variables.
 
-1. **Docker Deployment** (Recommended): Use pre-configured VS Code tasks for containerized deployment
-2. **Local Development**: Full debugging capabilities with VS Code launch configurations
-3. **Production Setup**: Azure-hosted deployment with proper secret management (via `azd`)
+### Quick Install
+
+Follow the quick deploy steps on the deployment guide to deploy this solution to your own Azure subscription.
+
+For detailed setup instructions, please follow the [deployment guide](DEPLOYMENT.md).
+
+| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Release-Manager-Assistant) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Release-Manager-Assistant) |
+|---|---|
 
 ---
 
-<h2>
-BUSINESS SCENARIO
-</h2>
+## BUSINESS SCENARIO
 
 #### 🧩 Key Challenges
 
@@ -109,9 +106,7 @@ BUSINESS SCENARIO
 
 ---
 
-<h2>
-SUPPORTING DOCUMENTATION
-</h2>
+## SUPPORTING DOCUMENTATION
 
 ## Resources
 
@@ -119,11 +114,11 @@ SUPPORTING DOCUMENTATION
 - **[JIRA API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/)** - Direct REST API access with JQL optimization
   > ⚠️ **Warning:** Jira Plugin uses HTTP BASIC authentication which is not recommended for Production workloads. Ensure token auth is configured with your OAuth provider.
 - **[Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)** - Comprehensive Model Context Protocol integration featuring:
-    - Work Items (create, read, update, search, batch operations)
-    - Builds and Releases (status tracking, artifact management)
-    - Repositories and Pull Requests (code change tracking)
-    - Teams and Iterations (project management)
-    - Search capabilities across all Azure DevOps entities
+  - Work Items (create, read, update, search, batch operations)
+  - Builds and Releases (status tracking, artifact management)
+  - Repositories and Pull Requests (code change tracking)
+  - Teams and Iterations (project management)
+  - Search capabilities across all Azure DevOps entities
   > ⚠️ **Warning:** Azure DevOps API access is subject to user permissions. Please make sure right permissions are configured to access all features/tools exposed as part of the MCP server.
 - **[Azure AI Foundry](https://ai.azure.com/doc/azure/ai-foundry/agents/overview)** - Cloud-based agent services with code interpreter capabilities
 - **Redis** - Session management and message queuing for scalable operations
@@ -174,6 +169,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ---
 
 ## Responsible AI Transparency FAQ
+
 Please refer to [Transparency FAQs](./TRANSPARENCY_FAQ.md) for responsible AI transparency details of this solution accelerator.
 
 ---

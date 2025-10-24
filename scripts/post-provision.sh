@@ -64,6 +64,27 @@ if [ "$IS_GITHUB_ACTIONS" = "true" ]; then
         echo -e "${GREEN}Post-provision script completed (GitHub Actions validation mode)${RESET}"
         exit 0
     }
+else
+    # Running locally - check if user is logged in to Azure
+    echo -e "${CYAN}Running locally - checking Azure authentication...${RESET}"
+
+    if ! az account show >/dev/null 2>&1; then
+        echo -e "${YELLOW}No Azure authentication found. Please run 'az login' manually and try again.${RESET}"
+        exit 1
+    fi
+
+    # Display current account info
+    account_info=$(az account show 2>/dev/null)
+    if [ -n "$account_info" ]; then
+        user_name=$(echo "$account_info" | jq -r '.user.name // .user.type')
+        subscription_name=$(echo "$account_info" | jq -r '.name')
+        subscription_id=$(echo "$account_info" | jq -r '.id')
+        echo -e "${GREEN}Authenticated as: $user_name${RESET}"
+        echo -e "${GREEN}Using subscription: $subscription_name ($subscription_id)${RESET}"
+    else
+        echo "Error: Failed to retrieve Azure account information." >&2
+        exit 1
+    fi
 fi
 
 # Get resource group name from azd environment
@@ -86,7 +107,7 @@ done
 get_azd_environment_value() {
     local variable_name="$1"
     local all_env_values="$2"
-    
+
     local match=$(echo "$all_env_values" | grep "$variable_name")
     if [ -n "$match" ]; then
         local value=$(echo "$match" | cut -d'=' -f2 | tr -d '"')
@@ -172,7 +193,7 @@ azure_ai_user_role_definition_id="53ca6127-db72-4b80-b1b0-d745d6d5456d"
 echo "$container_apps" | jq -r '.[] | @base64' | while IFS= read -r app_data; do
     app=$(echo "$app_data" | base64 --decode)
     app_name=$(echo "$app" | jq -r '.name')
-    
+
     # Check if this is the session manager or orchestrator
     if [[ "$app_name" == *"session-manager"* ]] || [[ "$app_name" == *"orchestrator"* ]]; then
         echo "Processing container app: $app_name"

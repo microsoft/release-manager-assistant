@@ -58,6 +58,26 @@ if ($isGitHubActions) {
         Write-Host "Post-provision script completed (GitHub Actions validation mode)" -ForegroundColor Green
         exit 0
     }
+} else {
+    # Running locally - check if user is logged in to Azure
+    Write-Host "Running locally - checking Azure authentication..." -ForegroundColor Cyan
+
+    try {
+        $accountInfo = az account show 2>$null
+        if (-not $accountInfo) {
+            Write-Host "No Azure authentication found. Please run 'az login' manually and try again." -ForegroundColor Yellow
+            exit 1
+        }
+
+        # Display current account info
+        $currentAccount = $accountInfo | ConvertFrom-Json
+        Write-Host "Authenticated as: $($currentAccount.user.name)" -ForegroundColor Green
+        Write-Host "Using subscription: $($currentAccount.name) ($($currentAccount.id))" -ForegroundColor Green
+
+    } catch {
+        Write-Error "Failed to check Azure authentication: $_"
+        exit 1
+    }
 }
 
 # Get resource group name from azd environment

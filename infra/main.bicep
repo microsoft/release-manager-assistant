@@ -59,33 +59,33 @@ param azureDevOpsOrgName string = ''
 @description('Azure DevOps PAT token')
 param azureDevOpsExtPat string = ''
 
-@description('Azure AI Foundry Resource Name - if provided, AI Foundry will not be deployed')
-param azureAiFoundryResourceName string = ''
+@description('Azure AI Foundry Resource Name')
+param azureAiFoundryResourceName string
 
-@description('Azure AI Foundry Resource Group - required if using existing AI Foundry resource')
-param azureAiFoundryResourceGroup string = ''
+@description('Azure AI Foundry Resource Group')
+param azureAiFoundryResourceGroup string
 
-@description('Azure AI Foundry Project Name - if provided, AI Foundry will not be deployed')
-param azureAiFoundryProjectName string = ''
-
-@secure()
-@description('Azure OpenAI Endpoint - if provided, AI Foundry OpenAI will not be deployed')
-param azureOpenAIEndpoint string = ''
-
-@description('Azure AI Model Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
-param azureAiModelDeploymentName string = ''
+@description('Azure AI Foundry Project Name')
+param azureAiFoundryProjectName string
 
 @secure()
-@description('Azure OpenAI Responses Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
-param azureOpenAIResponsesDeploymentName string = ''
+@description('Azure OpenAI Endpoint')
+param azureOpenAIEndpoint string
+
+@description('Azure AI Model Deployment Name')
+param azureAiModelDeploymentName string
 
 @secure()
-@description('Azure OpenAI Embedding Deployment Name - if provided, AI Foundry OpenAI will not be deployed')
-param azureOpenAIEmbeddingDeploymentName string = ''
+@description('Azure OpenAI Responses Deployment Name')
+param azureOpenAIResponsesDeploymentName string
 
 @secure()
-@description('Azure Content Safety Resource Name - if provided, Content Safety service will not be deployed')
-param azureContentSafetyResourceName string = ''
+@description('Azure OpenAI Embedding Deployment Name')
+param azureOpenAIEmbeddingDeploymentName string
+
+@secure()
+@description('Azure Content Safety Resource Name')
+param azureContentSafetyResourceName string
 
 var actualRedisPassword = redisPassword != '' ? redisPassword : uniqueString(subscription().id, environmentName, 'redis-password')
 

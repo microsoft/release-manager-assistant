@@ -10,7 +10,7 @@ flask-cors==6.0.0
 aiohttp_cors==0.7.0
 azure-storage-blob==12.20.0
 redis==6.4.0
-setuptools==75.8.0
+setuptools==80.9.0
 msgraph-sdk==1.28.0
 opencensus>=0.11.2
 opentelemetry-api>=1.29.0

@@ -19,7 +19,7 @@ PyYAML==6.0.1
 websockets==13.0.1
 aiohttp_cors==0.7.0
 redis==5.0.4
-setuptools==75.8.0
+setuptools==80.9.0
 opentelemetry-api==1.29.0
 opentelemetry-exporter-otlp==1.29.0
 azure-monitor-opentelemetry==1.6.4

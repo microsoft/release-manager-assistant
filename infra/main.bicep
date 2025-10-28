@@ -352,6 +352,9 @@ output FRONTEND_URL string = staticWebApp.outputs.uri
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
 output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
 
+@secure()
 output AZURE_AI_FOUNDRY_RESOURCE_GROUP string = azureAiFoundryResourceGroup
+@secure()
 output AZURE_AI_FOUNDRY_RESOURCE_NAME string = azureAiFoundryResourceName
+@secure()
 output AZURE_AI_FOUNDRY_PROJECT_NAME string = azureAiFoundryProjectName

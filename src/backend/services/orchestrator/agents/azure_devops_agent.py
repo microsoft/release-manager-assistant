@@ -4,6 +4,7 @@
 from agent_framework import ChatAgent, MCPStdioTool, MCPStreamableHTTPTool
 from agent_framework.azure import AzureOpenAIResponsesClient
 
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.telemetry.app_logger import AppLogger
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.configuration.agent_config import AzureOpenAIResponsesAgentConfig
@@ -16,9 +17,9 @@ class AzureDevOpsAgent(AgentBase):
     AzureDevOpsAgent provides integration with Azure DevOps system for the Release Manager using MCP.
     This agent is designed to be instantiated per session rather than shared across instances.
     """
-    def __init__(self, logger: AppLogger):
+    def __init__(self, logger: AppLogger, tracer_provider: AppTracerProvider):
         """Initialize the AzureDevOpsAgent instance."""
-        super().__init__(logger)
+        super().__init__(logger, tracer_provider)
 
 
     async def create_agent(

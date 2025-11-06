@@ -8,6 +8,7 @@ from azure.ai.agents.models import MessageRole as FoundryMessageRole, ThreadMess
 from agent_framework import ChatAgent, HostedCodeInterpreterTool
 from agent_framework_azure_ai import AzureAIAgentClient
 
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.utilities.blob_store_helper import BlobStoreHelper
 from common.utilities.redis_message_handler import RedisMessageHandler
 from common.telemetry.app_logger import AppLogger
@@ -20,9 +21,9 @@ class FinalAnswerGeneratorAgent(AgentBase):
     """
     The Final Answer Generator Agent interface that uses Code Interpreter tool to generate final answers.
     """
-    def __init__(self, logger: AppLogger):
+    def __init__(self, logger: AppLogger, tracer_provider: AppTracerProvider):
         """Initialize the FinalAnswerGeneratorAgent instance."""
-        super().__init__(logger)
+        super().__init__(logger, tracer_provider)
 
 
     async def create_agent(
@@ -69,6 +70,8 @@ class FinalAnswerGeneratorAgent(AgentBase):
         blob_store_helper: BlobStoreHelper,
         message_handler: RedisMessageHandler,
         thread_id: str,
+        session_id: str,
+        user_id: str,
         dialog_id: str,
     ) -> List[str]:
         visualization_image_sas_urls = []
@@ -83,7 +86,12 @@ class FinalAnswerGeneratorAgent(AgentBase):
                 self._logger.info("No images found for visualization.")
                 return []
 
-            await message_handler.send_update(update_message="Generating visualization...", dialog_id=dialog_id)
+            await message_handler.send_update(
+                update_message="Generating visualization...",
+                session_id=session_id,
+                user_id=user_id,
+                dialog_id=dialog_id
+            )
 
             for image_content in last_message.image_contents:
                 try:
@@ -108,7 +116,13 @@ class FinalAnswerGeneratorAgent(AgentBase):
                     continue  # Continue to the next file if an error occurs
 
             self._logger.info(f"Visualization data generated successfully with {len(visualization_image_sas_urls)} image(s).")
-            await message_handler.send_update(update_message="Successfully generated visualization data. Almost there..", dialog_id=dialog_id)
+            await message_handler.send_update(
+                update_message="Successfully generated visualization data. Almost there..",
+                session_id=session_id,
+                user_id=user_id,
+                dialog_id=dialog_id
+            )
+            
             return visualization_image_sas_urls
 
         except Exception as e:

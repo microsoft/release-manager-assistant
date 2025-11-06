@@ -8,7 +8,7 @@ from common.contracts.common.error import Error
 from common.contracts.common.answer import Answer
 
 
-class Response(BaseModel):
+class OrchestratorResponse(BaseModel):
     """
     Represents the response from the orchestrator after processing a user query.
 

@@ -4,7 +4,7 @@
 from common.contracts.configuration.orchestrator_config import (
     ResolvedOrchestratorConfig,
 )
-from common.contracts.orchestrator.request import Request
+from common.contracts.orchestrator.request import OrchestratorRequest
 from common.telemetry.app_logger import AppLogger
 
 

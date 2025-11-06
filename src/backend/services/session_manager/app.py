@@ -1,18 +1,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-import asyncio
 import json
-
+import asyncio
 import aiohttp_cors
 from aiohttp import web
+
+from config import DefaultConfig
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from config import DefaultConfig
 from handlers.client_manager import ClientManager
-from opentelemetry import trace
 
-from common.contracts.orchestrator.response import Response as OrchestratorResponse
+from common.contracts.orchestrator.response import OrchestratorResponse
 from common.utilities.message_queue_manager import MessageQueueManager
 from common.utilities.task_queue_manager import TaskQueueManager
 from common.utilities.thread_safe_cache import ThreadSafeCache
@@ -22,8 +21,8 @@ routes = web.RouteTableDef()
 DefaultConfig.initialize()
 
 tracer_provider = DefaultConfig.tracer_provider
-tracer_provider.set_up()
-tracer = trace.get_tracer(__name__)
+tracer_provider.initialize()
+
 # get the logger that is already initialized
 logger = DefaultConfig.logger
 logger.set_base_properties(
@@ -68,11 +67,11 @@ async def ws_chat(request: web.Request):
     session_id = request.rel_url.query.get("session_id")
     if not session_id:
         return web.json_response({"error": "session_id is required"}, status=400)
-
-    with tracer.start_as_current_span(f"start_session_for_{session_id}") as span:
-        trace_id = format(span.get_span_context().trace_id, "032x")
-        print(f"started session with trace_id: {trace_id}, session_id: {session_id}")
-
+    
+    with tracer_provider.trace_session(
+        session_id=session_id,
+        request_path="/api/query"
+    ):
         logger = DefaultConfig.logger
         base_properties = {
             "ApplicationName": "SESSION_MANAGER_SERVICE",
@@ -89,6 +88,7 @@ async def ws_chat(request: web.Request):
             client_manager = ClientManager(
                 session_id=session_id,
                 logger=logger,
+                tracer_provider=tracer_provider,
                 ai_foundry_project_client=ai_foundry_project_client,
                 task_manager=request_task_manager,
                 max_response_timeout=DefaultConfig.SESSION_MAX_RESPONSE_TIMEOUT_IN_SECONDS,
@@ -106,31 +106,42 @@ async def on_chat_message_response(message: str):
     if not message:
         raise Exception("Incorrect message payload.")
 
+    response_payload = json.loads(message)
+    payload = response_payload.get("payload", {})
+    orchestrator_response = OrchestratorResponse(**payload)
+
     client_manager = None
-    try:
-        logger = DefaultConfig.logger
+    
+    # Extract trace context from request before agent orchestration
+    trace_context = response_payload.get("trace_context", {})
+    ctx = tracer_provider.extract_trace_context(trace_context)
+    with tracer_provider.trace_message_dequeue(
+        session_id=orchestrator_response.session_id,
+        message_type=OrchestratorResponse.__name__,
+        message_queue_name="Orchestrator-SessionManager",
+        context=ctx
+    ):
+        try:
+            logger = DefaultConfig.logger
 
-        message_json = json.loads(message)
-        orchestrator_response = OrchestratorResponse(**message_json)
+            base_properties = {
+                "ApplicationName": "SESSION_MANAGER_SERVICE",
+                "session_id": orchestrator_response.session_id,
+                "thread_id": orchestrator_response.thread_id,
+                "user_id": orchestrator_response.user_id,
+            }
+            logger.set_base_properties(base_properties)
 
-        base_properties = {
-            "ApplicationName": "SESSION_MANAGER_SERVICE",
-            "session_id": orchestrator_response.session_id,
-            "thread_id": orchestrator_response.thread_id,
-            "user_id": orchestrator_response.user_id,
-        }
-        logger.set_base_properties(base_properties)
+            logger.info(
+                f"ConversationHandler: message response received for connection {orchestrator_response.session_id}."
+            )
 
-        logger.info(
-            f"ConversationHandler: message response received for connection {orchestrator_response.session_id}."
-        )
-
-        client_manager = await clients.get_async(orchestrator_response.session_id)
-        return await client_manager.handle_chat_response_async(orchestrator_response)
-    except Exception as ex:
-        logger.error(f"Failed to send a response to client for connection {orchestrator_response.session_id}: {ex}")
-        if client_manager:
-            await client_manager.close_connection_async(orchestrator_response.session_id, message="Internal Error.")
+            client_manager = await clients.get_async(orchestrator_response.session_id)
+            return await client_manager.handle_chat_response_async(orchestrator_response)
+        except Exception as ex:
+            logger.error(f"Failed to send a response to client for connection {orchestrator_response.session_id}: {ex}")
+            if client_manager:
+                await client_manager.close_connection_async(orchestrator_response.session_id, message="Internal Error.")
 
 
 def start_server(host: str, port: int):

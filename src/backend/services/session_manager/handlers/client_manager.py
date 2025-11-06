@@ -6,8 +6,9 @@ from aiohttp import web
 from azure.ai.projects import AIProjectClient
 
 from common.telemetry.app_logger import AppLogger
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.utilities.task_queue_manager import TaskQueueManager
-from common.contracts.orchestrator.response import Response as OrchestratorResponse
+from common.contracts.orchestrator.response import OrchestratorResponse as OrchestratorResponse
 from common.exceptions import (
     ClientConnectionClosedException,
     MessageProcessingTimeoutError,
@@ -26,11 +27,13 @@ class ClientManager:
         self,
         session_id: str,
         logger: AppLogger,
+        tracer_provider: AppTracerProvider,
         ai_foundry_project_client: AIProjectClient,
         task_manager: TaskQueueManager,
         max_response_timeout: int,
     ):
         self.logger = logger
+        self.tracer_provider = tracer_provider
         self.session_id = session_id
 
         self.ai_foundry_project_client = ai_foundry_project_client
@@ -56,6 +59,7 @@ class ClientManager:
             # Create conversation handler to handle incoming chat requests
             self._conversation_handler = ConversationHandler(
                 logger=self.logger,
+                tracer_provider=self.tracer_provider,
                 session_id=session_id,
                 task_manager=self.task_manager,
                 ai_foundry_project_client=self.ai_foundry_project_client,

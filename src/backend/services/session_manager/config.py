@@ -30,7 +30,6 @@ class DefaultConfig:
             config_reader = ConfigReader(None)
 
             APPLICATION_INSIGHTS_CNX_STR = config_reader.read_config_value(Config.APPLICATION_INSIGHTS_CNX_STR)
-
             cls.tracer_provider = AppTracerProvider(APPLICATION_INSIGHTS_CNX_STR)
             cls.logger = AppLogger(APPLICATION_INSIGHTS_CNX_STR)
             config_reader.set_logger(cls.logger)

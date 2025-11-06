@@ -10,8 +10,8 @@ from utils.asyncio_event_util import AsyncIOEventWithTimeout
 
 from common.contracts.common.user_message import UserMessage
 from common.contracts.common.user_query import PayloadType
-from common.contracts.orchestrator.request import Request as OrchestratorRequest
-from common.contracts.orchestrator.response import Response as OrchestratorResponse
+from common.contracts.orchestrator.request import OrchestratorRequest
+from common.contracts.orchestrator.response import OrchestratorResponse
 from common.contracts.session_manager.request import Request
 from common.contracts.session_manager.response import Response
 from common.exceptions import ContentSafetyException, MessageProcessingTimeoutError
@@ -22,7 +22,7 @@ from common.safety.image_safety import (
 )
 from common.safety.text_safety import TextModerator, UnsafeTextException
 from common.telemetry.app_logger import AppLogger
-from common.telemetry.trace_context import inject_trace_context
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.utilities.task_queue_manager import TaskQueueManager
 
 
@@ -34,12 +34,14 @@ class ConversationHandler:
     def __init__(
         self,
         logger: AppLogger,
+        tracer_provider: AppTracerProvider,
         session_id: str,
         task_manager: TaskQueueManager,
         ai_foundry_project_client: AIProjectClient,
         max_response_timeout: int = 30,
     ) -> None:
         self.logger = logger
+        self.tracer_provider = tracer_provider
         self.session_id = session_id
         self.task_manager = task_manager
         self.ai_foundry_project_client = ai_foundry_project_client
@@ -133,46 +135,57 @@ class ConversationHandler:
 
         user_message = await self.__create_user_message(user_request)
 
-        try:
-            if self.thread_id is None:
-                self.thread_id = self.ai_foundry_project_client.agents.threads.create().id
-                self.logger.info(f"Thread {self.thread_id} successfully created for session {self.session_id}")
+        with self.tracer_provider.trace_message_enqueue(
+            session_id=self.session_id,
+            message_type=OrchestratorRequest.__name__,
+            message_queue_name="sessionmanager-orchestrator"
+        ):
+            try:
+                if self.thread_id is None:
+                    self.thread_id = self.ai_foundry_project_client.agents.threads.create().id
+                    self.logger.info(f"Thread {self.thread_id} successfully created for session {self.session_id}")
 
-            # start orchestration to generate a bot response
-            orchestrator_request = OrchestratorRequest(
-                trace_id={},
-                session_id=self.session_id,
-                dialog_id=dialog_id,
-                user_id=user_id,
-                thread_id=self.thread_id,
-                message=user_message.get_user_message_str(),
-                locale=next(
-                    (payload.locale for payload in user_request.message.payload if payload.type == PayloadType.TEXT),
-                    None,
-                ),
-                user_profile=user_profile,
-                additional_metadata=user_request.additional_metadata,
-            )
-            inject_trace_context(orchestrator_request.trace_id)
+                # Inject trace context in message before queueing
+                trace_context = {}
+                self.tracer_provider.inject_trace_context(trace_context)
 
-            # Queue chat request in task queue
-            await self.task_manager.submit_task(orchestrator_request.model_dump_json())
+                # start orchestration to generate a bot response
+                orchestrator_request = OrchestratorRequest(
+                    session_id=self.session_id,
+                    dialog_id=dialog_id,
+                    user_id=user_id,
+                    thread_id=self.thread_id,
+                    message=user_message.get_user_message_str(),
+                    locale=next(
+                        (payload.locale for payload in user_request.message.payload if payload.type == PayloadType.TEXT),
+                        None,
+                    ),
+                    user_profile=user_profile,
+                    additional_metadata=user_request.additional_metadata,
+                )
 
-            # Create event for message response and await response until timeout.
-            is_message_response_received = await self._message_processing_status_event.wait(
-                timeout=self.max_response_timeout
-            )
-            if not is_message_response_received:
-                self.logger.warning(f"Timeout occurred waiting for message response for session {self.session_id}")
-                raise MessageProcessingTimeoutError("Request timed out.")
-            self.logger.info(f"Message response received for session {self.session_id}")
-        except Exception as ex:
-            self.logger.exception(f"Exception while queueing chat request task: {ex}")
-            raise
-        finally:
-            # Reset current message processing status upon response
-            self._message_processing_status_event.clear()
-            self.logger.info(f"Reset message processing status for session {self.session_id}")
+                # Queue chat request in task queue with trace context
+                task_payload = json.dumps({
+                    "payload": orchestrator_request.model_dump(),
+                    "trace_context": trace_context or {},
+                })
+                await self.task_manager.submit_task(task_payload)
+
+                # Create event for message response and await response until timeout.
+                is_message_response_received = await self._message_processing_status_event.wait(
+                    timeout=self.max_response_timeout
+                )
+                if not is_message_response_received:
+                    self.logger.warning(f"Timeout occurred waiting for message response for session {self.session_id}")
+                    raise MessageProcessingTimeoutError("Request timed out.")
+                self.logger.info(f"Message response received for session {self.session_id}")
+            except Exception as ex:
+                self.logger.exception(f"Exception while queueing chat request task: {ex}")
+                raise
+            finally:
+                # Reset current message processing status upon response
+                self._message_processing_status_event.clear()
+                self.logger.info(f"Reset message processing status for session {self.session_id}")
 
     async def create_user_response_async(self, orchestrator_response: OrchestratorResponse) -> str:
         """

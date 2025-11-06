@@ -9,7 +9,6 @@ import asyncio
 
 import aiohttp_cors
 from aiohttp import web
-from opentelemetry import trace
 from redis.asyncio import Redis
 
 from config import DefaultConfig
@@ -22,8 +21,8 @@ from plugins.az_devops_plugin import AzDevOpsPluginFactory, AzDevOpsPluginInitia
 
 from common.contracts.common.answer import Answer
 from common.contracts.common.error import Error
-from common.contracts.orchestrator.request import Request as OrchestratorRequest
-from common.contracts.orchestrator.response import Response as OrchestratorResponse
+from common.contracts.orchestrator.request import OrchestratorRequest
+from common.contracts.orchestrator.response import OrchestratorResponse
 from common.utilities.files import load_file
 from common.utilities.redis_message_handler import RedisMessageHandler
 from common.utilities.runtime_config import get_orchestrator_runtime_config
@@ -34,8 +33,7 @@ AGENT_CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__))
 DefaultConfig.initialize()
 
 tracer_provider = DefaultConfig.tracer_provider
-tracer_provider.set_up()
-tracer = trace.get_tracer(__name__)
+tracer_provider.initialize()
 
 # get the logger that is already initialized
 logger = DefaultConfig.logger
@@ -55,6 +53,11 @@ redis_messaging_client = Redis(
     password=DefaultConfig.REDIS_PASSWORD,
     ssl=False,
     decode_responses=True,
+)
+message_handler = RedisMessageHandler(
+    redis_client=redis_messaging_client,
+    redis_message_queue_channel=DefaultConfig.REDIS_MESSAGE_QUEUE_CHANNEL,
+    tracer_provider=tracer_provider
 )
 
 # Thread-safe cache to handle session to orchestrator mapping
@@ -82,20 +85,25 @@ async def health_check(request: web.Request):
     return web.Response(text="Orchestrator is running!", status=200)
 
 
-async def run_agent_orchestration(request_payload: str, message_handler: RedisMessageHandler):
+async def run_agent_orchestration(request_payload: str):
     try:
-        orchestrator_request = OrchestratorRequest(**request_payload)
+        payload = request_payload.get("payload", {})
+        orchestrator_request = OrchestratorRequest(**payload)
     except Exception as e:
         logger.error(f"Failed to parse request data: {e} \n Request payload: {request_payload}")
         error = Error(
             error_str=f"Failed to parse request data: {e} \n Request payload: {request_payload}", retry=False
         )
-        response = OrchestratorResponse(answer=Answer(is_final=True), error=error)
+        return await message_handler.send_final_response(
+            OrchestratorResponse(answer=Answer(is_final=True), error=error)
+        )
 
-        await message_handler.send_final_response(response)
-        return
-
-    await message_handler.send_update("Processing your request...", orchestrator_request.dialog_id)
+    await message_handler.send_update(
+        update_message="Processing your request...",
+        session_id=orchestrator_request.session_id,
+        user_id=orchestrator_request.user_id,
+        dialog_id=orchestrator_request.dialog_id
+    )
 
     logger.set_base_properties(
         {
@@ -106,65 +114,75 @@ async def run_agent_orchestration(request_payload: str, message_handler: RedisMe
     )
     logger.info(f"Received orchestration request: {request_payload} for session: {orchestrator_request.session_id}")
 
-    try:
-        # Lookup agent orchestrator for given session id
-        # If not found, create one just in time
-        agent_orchestrator = await orchestrators.get_async(orchestrator_request.session_id)
-        if not agent_orchestrator:
-            logger.info(f"Agent orchestrator not found for session {orchestrator_request.session_id}. Creating..")
+    # Extract trace context from request before agent orchestration
+    trace_context = request_payload.get("trace_context", {})
+    ctx = tracer_provider.extract_trace_context(trace_context)
+    with tracer_provider.trace_agent_orchestration(
+        session_id=orchestrator_request.session_id,
+        context=ctx
+    ):
+        try:
+            # Lookup agent orchestrator for given session id
+            # If not found, create one just in time
+            agent_orchestrator = await orchestrators.get_async(orchestrator_request.session_id)
+            if not agent_orchestrator:
+                logger.info(f"Agent orchestrator not found for session {orchestrator_request.session_id}. Creating..")
 
-            orchestrator_runtime_config = await get_orchestrator_runtime_config(
-                logger=logger,
-                default_runtime_config=default_runtime_config
+                orchestrator_runtime_config = await get_orchestrator_runtime_config(
+                    logger=logger,
+                    default_runtime_config=default_runtime_config
+                )
+                logger.info(f"Resolved orchestrator runtime config: {orchestrator_runtime_config}")
+
+                agent_orchestrator = AgentOrchestrator(
+                    logger=logger,
+                    tracer_provider=tracer_provider,
+                    message_handler=message_handler,
+                    jira_settings=JiraSettings(
+                        server_url=DefaultConfig.JIRA_SERVER_ENDPOINT,
+                        username=DefaultConfig.JIRA_SERVER_USERNAME,
+                        password=DefaultConfig.JIRA_SERVER_PASSWORD,
+                        config_file_path=AGENT_CONFIG_FILE_PATH,
+                        use_mcp_server=DefaultConfig.USE_JIRA_MCP_SERVER,
+                    ),
+                    devops_settings=DevOpsSettings(
+                        use_mcp_server=DefaultConfig.USE_AZURE_DEVOPS_MCP_SERVER,
+                        mcp_server_endpoint=DefaultConfig.AZURE_DEVOPS_MCP_SERVER_ENDPOINT,
+                        mcp_plugin_factory=mcp_plugin_factory,
+                    ),
+                    visualization_settings=VisualizationSettings(
+                        storage_account_name=DefaultConfig.STORAGE_ACCOUNT_NAME,
+                        visualization_data_blob_container=DefaultConfig.VISUALIZATION_DATA_CONTAINER,
+                    ),
+                    configuration=orchestrator_runtime_config,
+                    project_endpoint=DefaultConfig.AZURE_AI_PROJECT_ENDPOINT,
+                )
+
+                # Initialize workflow
+                await agent_orchestrator.initialize_agent_workflow()
+
+                # Add to session cache
+                await orchestrators.add_async(orchestrator_request.session_id, agent_orchestrator)
+                logger.info(f"Agent orchestrator created successfully for session {orchestrator_request.session_id}")
+
+            # Invoke agent workflow
+            response = await agent_orchestrator.start_agent_workflow(orchestrator_request)
+
+            logger.info(f"Agent Orchestration completed successfully for session {orchestrator_request.session_id}.")
+            return await message_handler.send_final_response(response)
+        except Exception as e:
+            logger.exception(f"Exception in /run_agent_orchestration: {e}")
+            error = Error(error_str="An error occurred. Please retry..", retry=False)
+
+            return await message_handler.send_final_response(
+                OrchestratorResponse(
+                    session_id=orchestrator_request.session_id,
+                    dialog_id=orchestrator_request.dialog_id,
+                    user_id=orchestrator_request.user_id,
+                    answer=Answer(is_final=True),
+                    error=error,
+                )
             )
-            logger.info(f"Resolved orchestrator runtime config: {orchestrator_runtime_config}")
-
-            agent_orchestrator = AgentOrchestrator(
-                logger=logger,
-                message_handler=message_handler,
-                jira_settings=JiraSettings(
-                    server_url=DefaultConfig.JIRA_SERVER_ENDPOINT,
-                    username=DefaultConfig.JIRA_SERVER_USERNAME,
-                    password=DefaultConfig.JIRA_SERVER_PASSWORD,
-                    config_file_path=AGENT_CONFIG_FILE_PATH,
-                    use_mcp_server=DefaultConfig.USE_JIRA_MCP_SERVER,
-                ),
-                devops_settings=DevOpsSettings(
-                    use_mcp_server=DefaultConfig.USE_AZURE_DEVOPS_MCP_SERVER,
-                    mcp_server_endpoint=DefaultConfig.AZURE_DEVOPS_MCP_SERVER_ENDPOINT,
-                    mcp_plugin_factory=mcp_plugin_factory,
-                ),
-                visualization_settings=VisualizationSettings(
-                    storage_account_name=DefaultConfig.STORAGE_ACCOUNT_NAME,
-                    visualization_data_blob_container=DefaultConfig.VISUALIZATION_DATA_CONTAINER,
-                ),
-                configuration=orchestrator_runtime_config,
-                project_endpoint=DefaultConfig.AZURE_AI_PROJECT_ENDPOINT,
-            )
-
-            # Initialize workflow
-            await agent_orchestrator.initialize_agent_workflow()
-
-            # Add to session cache
-            await orchestrators.add_async(orchestrator_request.session_id, agent_orchestrator)
-            logger.info(f"Agent orchestrator created successfully for session {orchestrator_request.session_id}")
-
-        # Invoke agent workflow
-        response = await agent_orchestrator.start_agent_workflow(orchestrator_request)
-
-        logger.info(f"Agent Orchestration completed successfully for session {orchestrator_request.session_id}.")
-        await message_handler.send_final_response(response)
-    except Exception as e:
-        logger.exception(f"Exception in /run_agent_orchestration: {e}")
-        error = Error(error_str="An error occurred. Please retry..", retry=False)
-        response = OrchestratorResponse(
-            session_id=orchestrator_request.session_id,
-            dialog_id=orchestrator_request.dialog_id,
-            user_id=orchestrator_request.user_id,
-            answer=Answer(is_final=True),
-            error=error,
-        )
-        await message_handler.send_final_response(response)
 
 
 async def __validate_mcp_prerequisites() -> bool:
@@ -270,24 +288,12 @@ async def worker():
         if task_data:
             try:
                 task = json.loads(task_data)
-
-                session_id = task.get("session_id")
-                thread_id = task.get("thread_id")
-                user_id = task.get("user_id")
             except Exception as e:
                 logger.error(f"Failed to parse task data: {e}")
                 continue
-            with tracer.start_as_current_span("process_task_at_orchestrator") as span:
-                span.set_attribute("session_id", session_id)
-                logger.info(f"Received task data: {task_data}")
-                message_handler = RedisMessageHandler(
-                    session_id=session_id,
-                    thread_id=thread_id,
-                    user_id=user_id,
-                    redis_client=redis_messaging_client,
-                    redis_message_queue_channel=DefaultConfig.REDIS_MESSAGE_QUEUE_CHANNEL,
-                )
-                await run_agent_orchestration(task, message_handler)
+            
+            logger.info(f"Received task data: {task_data}")
+            await run_agent_orchestration(task)
         else:
             await asyncio.sleep(1)
 

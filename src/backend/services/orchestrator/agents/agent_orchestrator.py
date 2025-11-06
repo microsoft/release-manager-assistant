@@ -30,8 +30,9 @@ from .planner_agent import PlannerAgentResponse
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.common.answer import Answer
 from common.contracts.configuration.orchestrator_config import ResolvedOrchestratorConfig
-from common.contracts.orchestrator.request import Request
-from common.contracts.orchestrator.response import Response
+from common.contracts.orchestrator.request import OrchestratorRequest
+from common.contracts.orchestrator.response import OrchestratorResponse
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.telemetry.app_logger import AppLogger
 from common.utilities.blob_store_helper import BlobStoreHelper
 from common.utilities.redis_message_handler import RedisMessageHandler
@@ -58,6 +59,7 @@ class AgentOrchestrator:
     def __init__(
         self,
         logger: AppLogger,
+        tracer_provider: AppTracerProvider,
         message_handler: RedisMessageHandler,
         jira_settings: JiraSettings,
         devops_settings: DevOpsSettings,
@@ -66,6 +68,7 @@ class AgentOrchestrator:
         configuration: ResolvedOrchestratorConfig = None,
     ) -> None:
         self.logger = logger
+        self.tracer_provider = tracer_provider
         self.message_handler = message_handler
 
         self.jira_settings = jira_settings
@@ -97,6 +100,7 @@ class AgentOrchestrator:
 
     async def __invoke_agent(
         self,
+        session_id: str,
         agent: Agent,
         messages: str | ChatMessage | list[str | ChatMessage],
         response_format: Optional[BaseModel] = None
@@ -108,6 +112,7 @@ class AgentOrchestrator:
 
         agent_runtime_config = self.config.get_agent_config(agent.value)
         response: AgentRunResponse = await self.agent_runtime_config_map.get(agent).agent.run(
+            session_id=session_id,
             messages=messages,
             thread=self.agent_runtime_config_map.get(agent).agent_thread,
             runtime_configuration=agent_runtime_config,
@@ -175,6 +180,7 @@ class AgentOrchestrator:
         self.agent_factory: ReleaseManagerAgentFactory = await ReleaseManagerAgentFactory.get_instance()
         await self.agent_factory.initialize(
             logger=self.logger,
+            tracer_provider=self.tracer_provider,
             foundry_client=self.foundry_client,
             azure_openai_responses_client=self.azure_openai_responses_client,
         )
@@ -211,7 +217,7 @@ class AgentOrchestrator:
             session_thread_id=session_thread.id,
         )
 
-    async def start_agent_workflow(self, request: Request) -> Response:
+    async def start_agent_workflow(self, request: OrchestratorRequest) -> OrchestratorResponse:
         """
         Start the agent workflow by invoking the JIRA and Azure DevOps agents, and generating visualization data.
 
@@ -237,11 +243,21 @@ class AgentOrchestrator:
             message = ChatMessage(role=Role.USER, text=request.message)
             self.chat_history.append(ChatMessage(role=Role.USER, text=request.message))
 
-            await self.message_handler.send_update("Generating plan...", dialog_id=request.dialog_id)
+            await self.message_handler.send_update(
+                update_message="Generating plan...",
+                session_id=request.session_id,
+                user_id=request.user_id,
+                dialog_id=request.dialog_id
+            )
 
             try:
                 # Execute Planner agent to generate the plan
-                planner_response = await self.__invoke_agent(Agent.PLANNER_AGENT, messages=request.message, response_format=PlannerAgentResponse)
+                planner_response = await self.__invoke_agent(
+                    session_id=request.session_id,
+                    agent=Agent.PLANNER_AGENT,
+                    messages=request.message,
+                    response_format=PlannerAgentResponse
+                )
                 plan = PlannerAgentResponse(**json.loads(planner_response.text))
 
                 if not plan.plan_id or Agent.FALLBACK_AGENT.value in plan.agents:
@@ -250,7 +266,9 @@ class AgentOrchestrator:
 
                 self.logger.info(f"Orchestration Plan generated successfully: {plan}")
                 await self.message_handler.send_update(
-                    "Plan generated. Starting Agent orchestration..",
+                    update_message="Plan generated. Starting Agent orchestration..",
+                    session_id=request.session_id,
+                    user_id=request.user_id,
                     dialog_id=request.dialog_id
                 )
 
@@ -265,7 +283,7 @@ class AgentOrchestrator:
                         raise ValueError(f"Agent {agent} not found in configuration.")
 
                     # Invoke the agent
-                    agent_response = await self.__invoke_agent(agent, self.chat_history)
+                    agent_response = await self.__invoke_agent(request.session_id, agent, self.chat_history)
                     self.logger.info(f"Agent {agent.name} response received.")
 
                     # Update the chat history with the final response
@@ -284,6 +302,8 @@ class AgentOrchestrator:
                             blob_store_helper=self.blob_store_helper,
                             message_handler=self.message_handler,
                             thread_id=final_answer_agent_config.agent_thread.service_thread_id,
+                            session_id=request.session_id,
+                            user_id=request.user_id,
                             dialog_id=request.dialog_id
                         )
 
@@ -305,17 +325,21 @@ class AgentOrchestrator:
             self.logger.exception(f"Exception occurred while orchestrating agents: {e}")
             raise
 
-    async def invoke_fallback(self, request: Request, message: str):
-        fallback_response = await self.__invoke_agent(Agent.FALLBACK_AGENT, message)
+    async def invoke_fallback(self, request: OrchestratorRequest, message: str):
+        fallback_response = await self.__invoke_agent(
+            session_id=request.session_id,
+            agent=Agent.FALLBACK_AGENT,
+            message=message
+        )
         return self.generate_final_response(request, fallback_response.text)
 
     def generate_final_response(
         self,
-        request: Request,
+        request: OrchestratorRequest,
         final_answer_str: str,
         data_points: Optional[list[str]] = []
-    ) -> Response:
-        return Response(
+    ) -> OrchestratorResponse:
+        return OrchestratorResponse(
             session_id=request.session_id,
             dialog_id=request.dialog_id,
             user_id=request.user_id,

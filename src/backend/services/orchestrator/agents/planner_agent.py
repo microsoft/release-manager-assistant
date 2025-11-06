@@ -7,6 +7,7 @@ from agent_framework import ChatAgent
 from agent_framework.azure import AzureOpenAIResponsesClient
 
 from common.telemetry.app_logger import AppLogger
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.agent_factory.agent_base import AgentBase
 from common.contracts.configuration.agent_config import AzureOpenAIResponsesAgentConfig
 
@@ -19,9 +20,9 @@ class PlannerAgent(AgentBase):
     """
     The Planner Agent interface helps generate orchestration plans for the Release Manager.
     """
-    def __init__(self, logger: AppLogger):
-        """Initialize the VisualizationAgent instance."""
-        super().__init__(logger)
+    def __init__(self, logger: AppLogger, tracer_provider: AppTracerProvider):
+        """Initialize the Planner Agent instance."""
+        super().__init__(logger, tracer_provider)
 
 
     async def create_agent(

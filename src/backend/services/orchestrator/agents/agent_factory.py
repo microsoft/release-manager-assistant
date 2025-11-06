@@ -2,8 +2,8 @@
 # Licensed under the MIT license.
 
 import asyncio
-from typing import Union, Dict, Callable, Optional
 from dataclasses import dataclass
+from typing import Union, Dict, Callable, Optional
 
 from agent_framework.azure import AzureAIAgentClient, AzureOpenAIResponsesClient
 
@@ -16,6 +16,7 @@ from common.contracts.configuration.agent_config import (
     AzureOpenAIResponsesAgentConfig,
     AzureAIAgentConfig
 )
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.telemetry.app_logger import AppLogger
 
 from .azure_devops_agent import AzureDevOpsAgent
@@ -76,6 +77,7 @@ class ReleaseManagerAgentFactory:
     async def initialize(
         self,
         logger: AppLogger,
+        tracer_provider: AppTracerProvider,
         foundry_client: Optional[AzureAIAgentClient] = None,
         azure_openai_responses_client: Optional[AzureOpenAIResponsesClient] = None
     ):
@@ -88,6 +90,7 @@ class ReleaseManagerAgentFactory:
                 raise ValueError("Logger is required for factory initialization")
 
             self.logger = logger
+            self.tracer_provider = tracer_provider
             self.foundry_client = foundry_client
             self.azure_openai_responses_client = azure_openai_responses_client
 
@@ -146,7 +149,7 @@ class ReleaseManagerAgentFactory:
     async def _create_final_answer_generator_agent(self, context: AgentCreationContext) -> FinalAnswerGeneratorAgent:
         """Create the Final Answer Generator Agent (singleton)."""
         async with self._lock:
-            final_answer_generator_agent = await FinalAnswerGeneratorAgent.get_instance(self.logger)
+            final_answer_generator_agent = await FinalAnswerGeneratorAgent.get_instance(self.logger, self.tracer_provider)
             await final_answer_generator_agent.initialize(
                 client=self.foundry_client,
                 configuration=context.configuration
@@ -158,7 +161,7 @@ class ReleaseManagerAgentFactory:
     async def _create_planner_agent(self, context: AgentCreationContext) -> PlannerAgent:
         """Create a new instance of PlannerAgent."""
         async with self._lock:
-            planner_agent = await PlannerAgent.get_instance(self.logger)
+            planner_agent = await PlannerAgent.get_instance(self.logger, self.tracer_provider)
             await planner_agent.initialize(
                 client=self.azure_openai_responses_client,
                 configuration=context.configuration
@@ -173,7 +176,7 @@ class ReleaseManagerAgentFactory:
             raise ValueError("jira_settings is required for JIRA agent")
 
         async with self._lock:
-            jira_agent = await JiraAgent.get_instance(self.logger)
+            jira_agent = await JiraAgent.get_instance(self.logger, self.tracer_provider)
             await jira_agent.initialize(
                 client=self.azure_openai_responses_client,
                 configuration=context.configuration,
@@ -197,7 +200,7 @@ class ReleaseManagerAgentFactory:
 
         try:
             async with self._lock:
-                azure_devops_agent = await AzureDevOpsAgent.get_instance(self.logger)
+                azure_devops_agent = await AzureDevOpsAgent.get_instance(self.logger, self.tracer_provider)
                 await azure_devops_agent.initialize(
                     client=self.azure_openai_responses_client,
                     configuration=context.configuration,
@@ -218,7 +221,7 @@ class ReleaseManagerAgentFactory:
     async def _create_fallback_agent(self, context: AgentCreationContext) -> FallbackAgent:
         """Create a new instance of FallbackAgent."""
         async with self._lock:
-            fallback_agent = await FallbackAgent.get_instance(logger=self.logger)
+            fallback_agent = await FallbackAgent.get_instance(logger=self.logger, tracer_provider=self.tracer_provider)
             await fallback_agent.initialize(client=self.azure_openai_responses_client, configuration=context.configuration)
 
         self.logger.info("Created new Fallback agent instance")

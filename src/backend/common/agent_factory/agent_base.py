@@ -2,18 +2,19 @@
 # Licensed under the MIT license.
 
 import asyncio
+from pydantic import BaseModel
 from abc import ABC, abstractmethod
 from typing import Any, Callable, ClassVar, Dict, Optional, Type, TypeVar, Union
 
 from agent_framework import AgentRunResponse, AgentThread, ChatAgent, ChatMessage, MCPStreamableHTTPTool
 from agent_framework.azure import AzureAIAgentClient, AzureOpenAIResponsesClient
 
+from common.telemetry.app_logger import AppLogger
+from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.contracts.configuration.agent_config import (
     AzureOpenAIResponsesAgentConfig,
     AzureAIAgentConfig
 )
-from common.telemetry.app_logger import AppLogger
-from pydantic import BaseModel
 
 T = TypeVar("T", bound="AgentBase")
 
@@ -24,8 +25,9 @@ class AgentBase(ABC):
     _instances: ClassVar[Dict[Type[T], T]] = {}
     _locks: ClassVar[Dict[Type[T], asyncio.Lock]] = {}
 
-    def __init__(self, logger: AppLogger):
+    def __init__(self, logger: AppLogger, tracer_provider: AppTracerProvider):
         self._logger = logger
+        self._tracer_provider = tracer_provider
 
         self._agent: ChatAgent = None
         self._config: Optional[Any] = None
@@ -36,9 +38,9 @@ class AgentBase(ABC):
         return False
 
     @classmethod
-    async def get_instance(cls: Type[T], logger: AppLogger) -> T:
+    async def get_instance(cls: Type[T], logger: AppLogger, tracer_provider: AppTracerProvider) -> T:
         if not cls._is_singleton():
-            return cls(logger)
+            return cls(logger, tracer_provider)
 
         if cls not in cls._instances:
             if cls not in cls._locks:
@@ -122,6 +124,7 @@ class AgentBase(ABC):
 
     async def run(
         self,
+        session_id: str,
         messages: str | ChatMessage | list[str | ChatMessage],
         thread: AgentThread,
         runtime_configuration: Union[AzureOpenAIResponsesAgentConfig, AzureAIAgentConfig],
@@ -153,8 +156,25 @@ class AgentBase(ABC):
         if tools and isinstance(tools, MCPStreamableHTTPTool):
             use_async_context = True
 
-        if use_async_context:
-            async with tools:
+        with self._tracer_provider.trace_agent_run(
+            session_id=session_id,
+            agent_name=self._agent.name
+        ):
+            if use_async_context:
+                async with tools:
+                    agent_response = await self._agent.run(
+                        messages=messages,
+                        thread=thread,
+                        tools=tools,
+                        response_format=response_format,
+                        max_tokens=runtime_configuration.max_completion_tokens,
+                        model=runtime_configuration.model,
+                        temperature=runtime_configuration.temperature,
+                        top_p=runtime_configuration.top_p,
+                        **kwargs
+                    )
+            else:
+                # No MCPStreamableHTTPTool, run normally
                 agent_response = await self._agent.run(
                     messages=messages,
                     thread=thread,
@@ -166,39 +186,26 @@ class AgentBase(ABC):
                     top_p=runtime_configuration.top_p,
                     **kwargs
                 )
-        else:
-            # No MCPStreamableHTTPTool, run normally
-            agent_response = await self._agent.run(
-                messages=messages,
-                thread=thread,
-                tools=tools,
-                response_format=response_format,
-                max_tokens=runtime_configuration.max_completion_tokens,
-                model=runtime_configuration.model,
-                temperature=runtime_configuration.temperature,
-                top_p=runtime_configuration.top_p,
-                **kwargs
+
+            # Log agent response with structured format
+            # Check if usage details are available
+            if agent_response.usage_details:
+                usage_info = (
+                f"  Usage Details:\n"
+                f"    Input Tokens:  {agent_response.usage_details.input_token_count}\n"
+                f"    Output Tokens: {agent_response.usage_details.output_token_count}\n"
+                f"    Total Tokens:  {agent_response.usage_details.total_token_count}"
+                )
+            else:
+                usage_info = "  Usage Details: Not available"
+
+            self._logger.info(
+                f"Agent response received:\n"
+                f"  Name: {self._agent.name}\n"
+                f"  Created At: {agent_response.created_at}\n"
+                f"  Response ID: {agent_response.response_id}\n"
+                f"  Response: {agent_response}\n"
+                f"{usage_info}"
             )
 
-        # Log agent response with structured format
-        # Check if usage details are available
-        if agent_response.usage_details:
-            usage_info = (
-            f"  Usage Details:\n"
-            f"    Input Tokens:  {agent_response.usage_details.input_token_count}\n"
-            f"    Output Tokens: {agent_response.usage_details.output_token_count}\n"
-            f"    Total Tokens:  {agent_response.usage_details.total_token_count}"
-            )
-        else:
-            usage_info = "  Usage Details: Not available"
-
-        self._logger.info(
-            f"Agent response received:\n"
-            f"  Name: {self._agent.name}\n"
-            f"  Created At: {agent_response.created_at}\n"
-            f"  Response ID: {agent_response.response_id}\n"
-            f"  Response: {agent_response}\n"
-            f"{usage_info}"
-        )
-
-        return agent_response
+            return agent_response

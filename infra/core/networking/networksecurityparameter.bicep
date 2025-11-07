@@ -38,7 +38,7 @@ resource keyVaultAssociation 'Microsoft.Network/networkSecurityPerimeters/resour
         profile: {
             id: profile.id
         }
-        accessMode: 'Transition'
+        accessMode: 'Learning'
     }
 }
 
@@ -54,7 +54,7 @@ resource storageAccountAssociation 'Microsoft.Network/networkSecurityPerimeters/
         profile: {
             id: profile.id
         }
-        accessMode: 'Transition'
+        accessMode: 'Learning'
     }
 }
 

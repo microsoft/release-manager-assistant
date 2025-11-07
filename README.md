@@ -3,8 +3,6 @@
     Release Manager
   </h1>
   <p><strong>Transforming software delivery process with intelligent agent orchestration</strong></p>
-  <br>
-  <p><a href="https://github.com/user-attachments/assets/fad365a9-f777-4aae-80e4-a437c5ad50e7">▶️ Watch Demo Video</a></p>
 </div>
 
 <div align="center">
@@ -56,6 +54,10 @@ The architecture is built on a modular and secure AI-native design leveraging:
 - **Visual Studio Code** with Python extension (recommended for development)
 
 > ⚠️ **IMPORTANT** To leverage MCP server with synthetic data, ensure `USE_JIRA_MCP_SERVER` and `USE_AZURE_DEVOPS_MCP_SERVER` are set to `true` as environment variables.
+
+### DEMO
+
+<p><a href="https://github.com/user-attachments/assets/fad365a9-f777-4aae-80e4-a437c5ad50e7">▶️ Watch Demo Video</a></p>
 
 ### Quick Install
 

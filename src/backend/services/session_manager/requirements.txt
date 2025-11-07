@@ -7,6 +7,7 @@ quart-cors==0.8.0
 azure-keyvault-secrets==4.7.0
 python-dotenv==1.0.0
 tenacity==8.4.1
+more_itertools==10.8.0
 opencensus-ext-azure==1.1.9
 opencensus==0.11.2
 azure-keyvault==4.2.0

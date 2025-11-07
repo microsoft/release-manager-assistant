@@ -329,7 +329,7 @@ class AgentOrchestrator:
         fallback_response = await self.__invoke_agent(
             session_id=request.session_id,
             agent=Agent.FALLBACK_AGENT,
-            message=message
+            messages=message
         )
         return self.generate_final_response(request, fallback_response.text)
 

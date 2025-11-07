@@ -12,6 +12,7 @@ azure-storage-blob==12.20.0
 redis==6.4.0
 setuptools==80.9.0
 msgraph-sdk==1.28.0
+more_itertools==10.8.0
 opencensus>=0.11.2
 opentelemetry-api>=1.29.0
 opencensus-ext-azure>=1.1.9

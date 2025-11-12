@@ -75,6 +75,6 @@ class AzureDevOpsAgent(AgentBase):
         else:
             if not settings.mcp_plugin_factory or not settings.mcp_plugin_factory.plugin:
                 raise ValueError("MCP plugin factory must be provided when not using mock MCP server")
-            
+
             self._logger.info("Using pre-initialized Azure DevOps MCP plugin")
             return settings.mcp_plugin_factory.plugin

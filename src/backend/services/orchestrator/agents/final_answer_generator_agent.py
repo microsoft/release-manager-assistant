@@ -3,7 +3,6 @@
 import os
 from typing import List
 
-from azure.ai.projects import AIProjectClient
 from azure.ai.agents.models import MessageRole as FoundryMessageRole, ThreadMessage
 from agent_framework import ChatAgent, HostedCodeInterpreterTool
 from agent_framework_azure_ai import AzureAIAgentClient
@@ -66,7 +65,7 @@ class FinalAnswerGeneratorAgent(AgentBase):
 
     async def generate_visualization_data(
         self,
-        project_client: AIProjectClient,
+        foundry_client: AzureAIAgentClient,
         blob_store_helper: BlobStoreHelper,
         message_handler: RedisMessageHandler,
         thread_id: str,
@@ -77,7 +76,7 @@ class FinalAnswerGeneratorAgent(AgentBase):
         visualization_image_sas_urls = []
 
         try:
-            last_message: ThreadMessage = await project_client.agents.messages.get_last_message_by_role(
+            last_message: ThreadMessage = await foundry_client.agents_client.messages.get_last_message_by_role(
                 thread_id=thread_id,
                 role=FoundryMessageRole.AGENT
             )
@@ -99,7 +98,7 @@ class FinalAnswerGeneratorAgent(AgentBase):
                     file_name = f"{image_content.image_file.file_id}_image_file.png"
 
                     # Save the image file to the target directory
-                    await project_client.agents.files.save(
+                    await foundry_client.agents_client.files.save(
                         file_id=image_content.image_file.file_id,
                         file_name=file_name,
                         target_dir=LOCAL_VISUALIZATION_DATA_DIR,
@@ -122,7 +121,7 @@ class FinalAnswerGeneratorAgent(AgentBase):
                 user_id=user_id,
                 dialog_id=dialog_id
             )
-            
+
             return visualization_image_sas_urls
 
         except Exception as e:

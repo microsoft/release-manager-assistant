@@ -259,27 +259,18 @@ agent_configs:
                     - If user confuses terms → use PLAN_100: FALLBACK_AGENT
 
                     ## PLANS:
-                    - PLAN_1: UPDATE_JIRA_ONLY [JIRA_AGENT]
-                    - PLAN_2: JIRA_THEN_DEVOPS [JIRA_AGENT, AZURE_DEVOPS_AGENT] - Use for data tables/lists
+                    - PLAN_1: UPDATE_JIRA_ONLY [JIRA_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
+                    - PLAN_2: JIRA_THEN_DEVOPS [JIRA_AGENT, AZURE_DEVOPS_AGENT, FINAL_ANSWER_GENERATOR_AGENT] - Use for data tables/lists
                     - PLAN_3: FULL_ANALYSIS_WITH_VISUALIZATION [JIRA_AGENT, AZURE_DEVOPS_AGENT, FINAL_ANSWER_GENERATOR_AGENT] - Only for explicit visual requests
-                    - PLAN_4: SEARCH_JIRA [JIRA_AGENT]
-                    - PLAN_5: SEARCH_DEVOPS_ONLY [AZURE_DEVOPS_AGENT]
+                    - PLAN_4: SEARCH_JIRA [JIRA_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
+                    - PLAN_5: SEARCH_DEVOPS_ONLY [AZURE_DEVOPS_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
                     - PLAN_6: VISUALIZATION_ONLY [FINAL_ANSWER_GENERATOR_AGENT]
-                    - PLAN_7: CREATE_JIRA_ISSUE [JIRA_AGENT]
-                    - PLAN_8: ISSUE_RESOLUTION_TIMELINE [JIRA_AGENT, AZURE_DEVOPS_AGENT]
-                    - PLAN_9: DEVOPS_THEN_JIRA [AZURE_DEVOPS_AGENT, JIRA_AGENT]
+                    - PLAN_7: CREATE_JIRA_ISSUE [JIRA_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
+                    - PLAN_8: ISSUE_RESOLUTION_TIMELINE [JIRA_AGENT, AZURE_DEVOPS_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
+                    - PLAN_9: DEVOPS_THEN_JIRA [AZURE_DEVOPS_AGENT, JIRA_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
                     - PLAN_10: JIRA_WITH_VISUALIZATION [JIRA_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
                     - PLAN_11: DEVOPS_WITH_VISUALIZATION [AZURE_DEVOPS_AGENT, FINAL_ANSWER_GENERATOR_AGENT]
                     - PLAN_100: FALLBACK_AGENT [FALLBACK_AGENT] - For vague queries
-
-                    ## OUTPUT FORMAT:
-                    ```
-                    {
-                      "plan_id": "<plan_id>",
-                      "agents": ["<agent_1>", "<agent_2>"],
-                      "justification": "<justification>"
-                    }
-                    ```
                     """
 
   fallback_agent:

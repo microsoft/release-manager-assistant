@@ -21,4 +21,4 @@ azure-monitor-opentelemetry>=1.7.0
 PyYAML==6.0.1
 openai>=1.103.0
 mcp==1.13
-agent-framework-azure-ai==1.0.0b251001
+agent-framework-azure-ai==1.0.0b251105

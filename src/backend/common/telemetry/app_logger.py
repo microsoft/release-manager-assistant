@@ -7,13 +7,13 @@ from enum import Enum
 from azure.monitor.opentelemetry.exporter import AzureMonitorLogExporter
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.sdk.resources import Resource, ResourceAttributes
+from opentelemetry.sdk.resources import Resource
 from opentelemetry._logs import set_logger_provider
 
 
 from common.telemetry.log_classes import LogProperties
 
-resource = Resource.create({ResourceAttributes.SERVICE_NAME: "telemetry"})
+DEFAULT_RESOURCE = Resource.create({"resource.name": "telemetry"})
 
 class LogEvent(Enum):
     REQUEST_RECEIVED = "Request.Received"
@@ -28,40 +28,86 @@ class ConsoleLogFilter(logging.Filter):
     def __init__(self):
         super().__init__()
         self.base_dir = os.path.abspath(os.path.join(__file__, "..", ".."))
+
         # Define allowed third-party loggers (only show WARNING and above)
         self.allowed_third_party = [
             "semantic_kernel",
-            "agent_framework", 
+            "agent_framework",
             "azure_mcp"
         ]
-    
+
     def filter(self, record):
         # Always allow logs from our application
         if os.path.abspath(record.pathname).startswith(self.base_dir):
             return True
-        
+
         # For third-party libraries, only show WARNING and above to reduce noise
         for allowed in self.allowed_third_party:
             if record.name.startswith(allowed):
                 return record.levelno >= logging.WARNING
-        
+
         # Filter out everything else
         return False
 
 class AppLogger:
-    def __init__(self, connection_string: str):
-        self.connection_string = connection_string
+    def __init__(self, connection_string: str = None, logger: logging.Logger = None, resource: Resource = None):
+        """
+        Initialize AppLogger with either a connection string or an existing logger.
 
-        logging.getLogger("azure.identity").setLevel(logging.WARNING)
-        logging.getLogger("azure.core.pipeline.policies").setLevel(logging.WARNING)
-        logging.getLogger("azure.monitor.opentelemetry.exporter.export").setLevel(logging.WARNING)
+        Args:
+            connection_string: Azure Monitor connection string for telemetry (optional if logger is provided)
+            logger: Existing logger instance to wrap (optional if connection_string is provided)
+            resource: Resource describing the service (optional)
+        """
+        if logger is not None:
+            # Initialize from existing logger
+            self.connection_string = connection_string
+            self.logger = logger
+            self.logger_provider = LoggerProvider(resource or DEFAULT_RESOURCE)
+            self._from_existing_logger = True
 
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.INFO)
-        self.logger_provider = LoggerProvider(resource)
+            self.logger.setLevel(logging.INFO)
 
-        self.initialize_loggers()
-        
+            # Set up third-party logger levels
+            logging.getLogger("azure.identity").setLevel(logging.WARNING)
+            logging.getLogger("azure.core.pipeline.policies").setLevel(logging.WARNING)
+            logging.getLogger("azure.monitor.opentelemetry.exporter.export").setLevel(logging.WARNING)
+
+            # Only initialize Azure Monitor if connection string is provided
+            if connection_string:
+                self.initialize_loggers()
+        else:
+            # Original initialization path
+            if connection_string is None:
+                raise ValueError("Either connection_string or logger must be provided")
+
+            self.connection_string = connection_string
+            self._from_existing_logger = False
+
+            logging.getLogger("azure.identity").setLevel(logging.WARNING)
+            logging.getLogger("azure.core.pipeline.policies").setLevel(logging.WARNING)
+            logging.getLogger("azure.monitor.opentelemetry.exporter.export").setLevel(logging.WARNING)
+
+            self.logger = logging.getLogger()
+            self.logger.setLevel(logging.INFO)
+            self.logger_provider = LoggerProvider(resource)
+
+            self.initialize_loggers()
+
+    @classmethod
+    def from_logger(cls, logger: logging.Logger, connection_string: str = None, resource: Resource = None) -> "AppLogger":
+        """
+        Create an AppLogger instance from an existing logger.
+
+        Args:
+            logger: Existing logger instance to wrap
+            connection_string: Optional Azure Monitor connection string for telemetry
+
+        Returns:
+            AppLogger instance that wraps the provided logger
+        """
+        return cls(connection_string=connection_string, logger=logger, resource=resource)
+
     def initialize_loggers(self):
         if self.connection_string:
             if not any(
@@ -73,7 +119,7 @@ class AppLogger:
                 self.handler = LoggingHandler()
                 self.logger.addHandler(self.handler)
 
-        # add console logger if it is not already added by another instance of CustomLogger
+        # Only add console handler if we're not using an existing logger or if no StreamHandler exists
         if not any(
             isinstance(handler, logging.StreamHandler)
             for handler in self.logger.handlers
@@ -85,7 +131,9 @@ class AppLogger:
             console_handler.setLevel(log_level)
             console_handler.addFilter(ConsoleLogFilter())
             self.logger.addHandler(console_handler)
-        set_logger_provider(self.logger_provider)
+
+        if not self._from_existing_logger:
+            set_logger_provider(self.logger_provider)
 
     def info(self, message:str, properties: dict = None):
         self.logger.info(message)

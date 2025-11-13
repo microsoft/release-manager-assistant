@@ -13,7 +13,10 @@ param logAnalyticsWorkspaceId string
 @description('Whether to enable zone redundancy')
 param zoneRedundant bool = false
 
-resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2023-05-01' = {
+@description('The resource ID of the subnet for Container Apps infrastructure')
+param infrastructureSubnetId string
+
+resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: name
   location: location
   tags: tags
@@ -25,6 +28,16 @@ resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2023-05-01'
         sharedKey: listKeys(logAnalyticsWorkspaceId, '2021-12-01-preview').primarySharedKey
       }
     }
+    vnetConfiguration: {
+      internal: false // Must be false to have public IP address as per security requirements
+      infrastructureSubnetId: infrastructureSubnetId
+    }
+    workloadProfiles: [
+      {
+        name: 'Consumption'
+        workloadProfileType: 'Consumption'
+      }
+    ]
     zoneRedundant: zoneRedundant
   }
 }

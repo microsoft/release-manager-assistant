@@ -1,11 +1,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from typing import Optional
 import time
-from datetime import datetime, timezone
-
 import logging
+from typing import Optional
+from datetime import datetime, timezone
 from contextlib import contextmanager
 
 from more_itertools import extract
@@ -32,28 +31,84 @@ class AppTracerProvider:
 
     Call `initialize()` to set up the tracer provider.
     """
-    def __init__(self, connection_string: str):
-        self.connection_string = connection_string
+    def __init__(
+        self,
+        connection_string: str = None,
+        tracer: trace.Tracer = None,
+        resource: Resource = None,
+        instrumentation_module_name: str = None
+    ):
+        """
+        Initialize AppTracerProvider with either a connection string or an existing tracer.
 
-        self.tracer = None
-        self.enabled = False
+        Args:
+            connection_string: Azure Monitor connection string for telemetry (optional if tracer is provided)
+            tracer: Existing tracer instance to use (optional if connection_string is provided)
+            resource: Resource describing the service (optional)
+            instrumentation_module_name: Name of the instrumentation module for the tracer (optional)
+        """
+        self.module_name = instrumentation_module_name
+        self.resource = resource
+
+        if tracer is not None:
+            # Initialize from existing tracer
+            self.connection_string = connection_string
+            self.tracer = tracer
+
+            self.enabled = True
+            self._from_existing_tracer = True
+        else:
+            # Original initialization path
+            if connection_string is None:
+                raise ValueError("Either connection_string or tracer must be provided")
+
+            self.connection_string = connection_string
+            self.tracer = None
+
+            self.enabled = False
+            self._from_existing_tracer = False
+
+    @classmethod
+    def from_tracer(
+        cls,
+        tracer: trace.Tracer,
+        connection_string: str = None,
+        resource: Resource = None,
+        instrumentation_module_name: str = None,
+    ) -> "AppTracerProvider":
+        """
+        Create an AppTracerProvider instance from an existing tracer.
+
+        Args:
+            tracer: Existing tracer instance to use
+            connection_string: Optional Azure Monitor connection string for additional telemetry
+            resource: Resource describing the service (optional)
+            instrumentation_module_name: Name of the instrumentation module for the tracer (optional)
+
+        Returns:
+            AppTracerProvider instance that uses the provided tracer
+        """
+        return cls(
+            connection_string=connection_string,
+            tracer=tracer,
+            resource=resource,
+            instrumentation_module_name=instrumentation_module_name
+        )
 
     def initialize(self):
-        try:
-            # Create resource with evaluation-specific attributes
-            resource = Resource.create({
-                "service.name": "ReleaseManagerAssistant",
-                "service.version": "1.0.0",
-                "service.namespace": "rma-template"
-            })
+        # Skip initialization if tracer was provided externally
+        if self._from_existing_tracer:
+            logger.info("AppTracerProvider initialized with existing tracer")
+            return
 
-            tracer_provider = TracerProvider(resource=resource)
+        try:
+            tracer_provider = TracerProvider(resource=self.resource)
 
             exporter = AzureMonitorTraceExporter(connection_string=self.connection_string)
             tracer_provider.add_span_processor(BatchSpanProcessor(exporter))
             set_tracer_provider(tracer_provider)
 
-            self.tracer = trace.get_tracer("release-manager-assistant")
+            self.tracer = trace.get_tracer(self.module_name)
             self.enabled = True
 
         except Exception as ex:
@@ -117,7 +172,7 @@ class AppTracerProvider:
                 span.set_status(Status(StatusCode.ERROR, str(ex)))
                 span.record_exception(ex)
                 raise
-    
+
     @contextmanager
     def trace_message_enqueue(
         self,
@@ -163,7 +218,7 @@ class AppTracerProvider:
                 span.set_status(Status(StatusCode.ERROR, str(ex)))
                 span.record_exception(ex)
                 raise
-    
+
     @contextmanager
     def trace_message_dequeue(
         self,

@@ -195,7 +195,31 @@ module containerRegistry './core/host/container-registry.bicep' = {
   }
 }
 
-// Create Container Apps Environment
+// Create NAT Gateway with public IP for Container Apps
+module natGateway './core/networking/nat-gateway.bicep' = {
+  name: 'nat-gateway'
+  scope: rg
+  params: {
+    name: '${abbrs.networkNatGateways}${resourceToken}'
+    location: location
+    tags: tags
+    publicIpName: '${abbrs.networkPublicIPAddresses}${resourceToken}'
+  }
+}
+
+// Create Virtual Network with subnet for Container Apps
+module virtualNetwork './core/networking/virtual-network.bicep' = {
+  name: 'virtual-network'
+  scope: rg
+  params: {
+    name: '${abbrs.networkVirtualNetworks}${resourceToken}'
+    location: location
+    tags: tags
+    natGatewayId: natGateway.outputs.natGatewayId
+  }
+}
+
+// Create Container Apps Environment with subnet and NAT gateway
 module containerAppsEnvironment './core/host/container-apps-environment.bicep' = {
   name: 'container-apps-environment'
   scope: rg
@@ -204,6 +228,7 @@ module containerAppsEnvironment './core/host/container-apps-environment.bicep' =
     location: location
     tags: tags
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    infrastructureSubnetId: virtualNetwork.outputs.subnetId
   }
 }
 
@@ -351,6 +376,13 @@ output FRONTEND_URL string = staticWebApp.outputs.uri
 
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
 output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+
+// Network infrastructure outputs
+output VIRTUAL_NETWORK_ID string = virtualNetwork.outputs.vnetId
+output VIRTUAL_NETWORK_NAME string = virtualNetwork.outputs.vnetName
+output SUBNET_ID string = virtualNetwork.outputs.subnetId
+output NAT_GATEWAY_ID string = natGateway.outputs.natGatewayId
+output PUBLIC_IP_ADDRESS string = natGateway.outputs.publicIpAddress
 
 @secure()
 output AZURE_AI_FOUNDRY_RESOURCE_GROUP string = azureAiFoundryResourceGroup

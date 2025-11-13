@@ -4,10 +4,22 @@
 import os
 from dotenv import load_dotenv
 
+from opentelemetry.sdk.resources import Resource
+from agent_framework.observability import setup_observability, get_logger, get_tracer
+
 from common.telemetry.app_logger import AppLogger
 from common.telemetry.app_tracer_provider import AppTracerProvider
 from common.utilities.config_reader import Config, ConfigReader
 
+import os
+
+RELEASE_MANAGER_ASSISTANT_INSTRUMENTATION_MODULE_NAME="agent_framework-release_manager"
+
+RESOURCE = Resource.create({
+    "service.name": "ReleaseManagerAssistant",
+    "service.version": "1.0.0",
+    "service.namespace": "rma-template"
+})
 
 def str_to_bool(s: str):
     return s.lower() == "true"
@@ -28,10 +40,31 @@ class DefaultConfig:
 
             APPLICATION_INSIGHTS_CNX_STR = config_reader.read_config_value(Config.APPLICATION_INSIGHTS_CNX_STR)
 
-            cls.tracer_provider = AppTracerProvider(APPLICATION_INSIGHTS_CNX_STR)
-            cls.logger = AppLogger(APPLICATION_INSIGHTS_CNX_STR)
-            cls.logger.set_base_properties({"ApplicationName": "ORCHESTRATOR_SERVICE"})
-            config_reader.set_logger(cls.logger)
+            # Setup Agent Framework Observability
+            setup_observability(
+                enable_sensitive_data=True,
+                applicationinsights_connection_string=APPLICATION_INSIGHTS_CNX_STR
+            )
+
+            # Create App Logger instance from existing logger
+            agent_framework_logger = get_logger(RELEASE_MANAGER_ASSISTANT_INSTRUMENTATION_MODULE_NAME)
+            cls.logger = AppLogger.from_logger(
+                logger=agent_framework_logger,
+                connection_string=APPLICATION_INSIGHTS_CNX_STR,
+                resource=RESOURCE,
+            )
+
+            # Create App Tracer instance from existing tracer
+            agent_framework_tracer = get_tracer(
+                instrumenting_module_name=RELEASE_MANAGER_ASSISTANT_INSTRUMENTATION_MODULE_NAME,
+                attributes=RESOURCE.attributes
+            )
+            cls.tracer = AppTracerProvider.from_tracer(
+                tracer=agent_framework_tracer,
+                connection_string=APPLICATION_INSIGHTS_CNX_STR,
+                resource=RESOURCE,
+                instrumentation_module_name=RELEASE_MANAGER_ASSISTANT_INSTRUMENTATION_MODULE_NAME
+            )
 
             try:
                 cls.SERVICE_HOST = os.getenv(Config.SERVICE_HOST.value, "0.0.0.0")

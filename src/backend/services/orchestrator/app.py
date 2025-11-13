@@ -32,9 +32,6 @@ AGENT_CONFIG_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__))
 
 DefaultConfig.initialize()
 
-tracer_provider = DefaultConfig.tracer_provider
-tracer_provider.initialize()
-
 # get the logger that is already initialized
 logger = DefaultConfig.logger
 logger.set_base_properties(
@@ -42,6 +39,8 @@ logger.set_base_properties(
         "ApplicationName": "ORCHESTRATOR_SERVICE",
     }
 )
+
+tracer_provider = DefaultConfig.tracer
 
 # Create route definitions for API endpoints
 routes = web.RouteTableDef()
@@ -117,10 +116,7 @@ async def run_agent_orchestration(request_payload: str):
     # Extract trace context from request before agent orchestration
     trace_context = request_payload.get("trace_context", {})
     ctx = tracer_provider.extract_trace_context(trace_context)
-    with tracer_provider.trace_agent_orchestration(
-        session_id=orchestrator_request.session_id,
-        context=ctx
-    ):
+    with tracer_provider.trace_agent_orchestration(session_id=orchestrator_request.session_id, context=ctx):
         try:
             # Lookup agent orchestrator for given session id
             # If not found, create one just in time
@@ -156,6 +152,7 @@ async def run_agent_orchestration(request_payload: str):
                     ),
                     configuration=orchestrator_runtime_config,
                     project_endpoint=DefaultConfig.AZURE_AI_PROJECT_ENDPOINT,
+                    foundry_model_deployment_name=DefaultConfig.AZURE_AI_MODEL_DEPLOYMENT_NAME,
                 )
 
                 # Initialize workflow
@@ -291,7 +288,7 @@ async def worker():
             except Exception as e:
                 logger.error(f"Failed to parse task data: {e}")
                 continue
-            
+
             logger.info(f"Received task data: {task_data}")
             await run_agent_orchestration(task)
         else:

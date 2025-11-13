@@ -48,7 +48,7 @@ class AgentBase(ABC):
 
             async with cls._locks[cls]:
                 if cls not in cls._instances:
-                    cls._instances[cls] = cls(logger)
+                    cls._instances[cls] = cls(logger, tracer_provider)
 
         return cls._instances[cls]
 
@@ -156,10 +156,7 @@ class AgentBase(ABC):
         if tools and isinstance(tools, MCPStreamableHTTPTool):
             use_async_context = True
 
-        with self._tracer_provider.trace_agent_run(
-            session_id=session_id,
-            agent_name=self._agent.name
-        ):
+        with self._tracer_provider.trace_agent_run(session_id=session_id, agent_name=self._agent.name):
             if use_async_context:
                 async with tools:
                     agent_response = await self._agent.run(
@@ -168,7 +165,7 @@ class AgentBase(ABC):
                         tools=tools,
                         response_format=response_format,
                         max_tokens=runtime_configuration.max_completion_tokens,
-                        model=runtime_configuration.model,
+                        model_id=runtime_configuration.model,
                         temperature=runtime_configuration.temperature,
                         top_p=runtime_configuration.top_p,
                         **kwargs
@@ -181,7 +178,7 @@ class AgentBase(ABC):
                     tools=tools,
                     response_format=response_format,
                     max_tokens=runtime_configuration.max_completion_tokens,
-                    model=runtime_configuration.model,
+                    model_id=runtime_configuration.model,
                     temperature=runtime_configuration.temperature,
                     top_p=runtime_configuration.top_p,
                     **kwargs

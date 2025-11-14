@@ -7,9 +7,6 @@
 
 In modern software development, **Release Managers** play a pivotal role bridging the gap between development and operations. As the orchestrators of software deployment, they ensure that releases are timely, efficient, and risk-mitigated. However, increasing complexity and fragmentation across systems have made this role more challenging than ever.
 
-#### DISCLAIMER
-*With any AI solutions you create using these templates, you are responsible for assessing all associated risks, and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).*
-
 <div align="center">
 <br>
 
@@ -17,6 +14,9 @@ In modern software development, **Release Managers** play a pivotal role bridgin
 
 </div>
 <br/>
+
+
+**Note**: With any AI solutions you create using these templates, you are responsible for assessing all associated risks, and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
 
 ## SOLUTION OVERVIEW
 

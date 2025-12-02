@@ -20,5 +20,5 @@ opentelemetry-exporter-otlp>=1.29.0
 azure-monitor-opentelemetry>=1.7.0
 PyYAML==6.0.1
 openai>=1.103.0
-mcp==1.13
+mcp==1.23.0
 agent-framework-azure-ai==1.0.0b251105

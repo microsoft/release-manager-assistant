@@ -3,7 +3,7 @@ azure-keyvault-secrets==4.7.0
 azure-ai-projects==1.0.0b11
 jira==3.8.0
 docker==7.1.0
-aiohttp==3.12.14
+aiohttp==3.13.3
 python-dotenv==1.0.1
 Flask[async]==3.1.1
 flask-cors==6.0.0

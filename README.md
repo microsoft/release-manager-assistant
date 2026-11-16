@@ -54,7 +54,7 @@ The architecture is built on a modular and secure AI-native design leveraging:
 - **Azure DevOps organization access** with work item, build, and release permissions (*Optional - MCP Server with synthetic Azure DevOps data is included*)
 - **Node.js 20+** (required for Azure DevOps MCP Server)
 - **Python == 3.12** for agent runtime
-- **Docker runtime** for running service containers locally.
+- **Docker runtime** for building service images during `azd up` and running containers locally. The dev container includes Docker.
 - **Visual Studio Code** with Python extension (recommended for development)
 
 > ⚠️ **IMPORTANT** To leverage MCP server with synthetic data, ensure `USE_JIRA_MCP_SERVER` and `USE_AZURE_DEVOPS_MCP_SERVER` are set to `true` as environment variables.

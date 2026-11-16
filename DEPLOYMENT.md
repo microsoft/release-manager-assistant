@@ -80,6 +80,8 @@ This guide walks you through deploying the Release Manager Assistant to Azure us
      - **Linux (Ubuntu/Debian)**: `sudo apt update && sudo apt install python3.12 python3-pip`
      - **macOS**: `brew install python@3.12`
 
+5. **Docker** - Install and start [Docker](https://docs.docker.com/get-docker/) to build the service images during `azd up`. The dev container includes Docker.
+
 ### Azure Requirements
 
 - **Azure Subscription** with the following permissions:

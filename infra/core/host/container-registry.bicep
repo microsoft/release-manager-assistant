@@ -16,7 +16,7 @@ param tags object = {}
 param sku string = 'Basic'
 
 @description('Whether admin user is enabled')
-param adminUserEnabled bool = true
+param adminUserEnabled bool = false
 
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: name
